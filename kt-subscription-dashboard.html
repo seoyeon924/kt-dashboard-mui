@@ -124,7 +124,7 @@ body {
 .kpi-value { font-size: 26px; font-weight: 700; color: #111; letter-spacing: -0.5px; }
 .kpi-delta { font-size: 13px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 .kpi-delta.up { color: #E8000D; }
-.kpi-delta.down { color: #1a7a40; }
+.kpi-delta.down { color: #1e6640; }
 .kpi-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
 .kpi-main {
   background: #f4f4f4;
@@ -187,7 +187,7 @@ body {
 .trend-item .trend-item-val { font-size: 20px; font-weight: 700; color: #111; }
 .trend-item .trend-item-delta { font-size: 12px; margin-top: 2px; }
 .trend-item .trend-item-delta.up { color: #E8000D; }
-.trend-item .trend-item-delta.down { color: #1a7a40; }
+.trend-item .trend-item-delta.down { color: #1e6640; }
 
 /* ─── CHART FILTER ROW ───────────────────────── */
 .chart-filter-row {
@@ -232,11 +232,11 @@ body {
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: #fafafa; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
-.badge-ai { background: #fff0f0; color: #cc0010; }
-.badge-cloud { background: #e8f4ff; color: #1560bd; }
-.badge-dev { background: #f0f9f4; color: #1a6b3a; }
-.badge-collab { background: #fff8e8; color: #8a5200; }
-.badge-bi { background: #f5f0ff; color: #5a2d9a; }
+.badge-ai { background: #f0f0f0; color: #333; font-weight: 600; }
+.badge-cloud { background: #f0f0f0; color: #555; }
+.badge-dev { background: #f0f0f0; color: #555; }
+.badge-collab { background: #f0f0f0; color: #555; }
+.badge-bi { background: #f0f0f0; color: #555; }
 
 svg text { font-family: 'Inter', 'Pretendard', sans-serif; }
 </style>
@@ -307,7 +307,7 @@ svg text { font-family: 'Inter', 'Pretendard', sans-serif; }
 <script>
 // ─── DATA ────────────────────────────────────────────────────────
 const CATEGORIES = ['AI도구', '클라우드', '개발도구', '협업', 'BI/디자인'];
-const CAT_COLORS = { 'AI도구':'#E8000D','클라우드':'#1560bd','개발도구':'#1a7a40','협업':'#c07800','BI/디자인':'#6a30b0' };
+const CAT_COLORS = { 'AI도구':'#E8000D','클라우드':'#2a2a2a','개발도구':'#606060','협업':'#909090','BI/디자인':'#b8b8b8' };
 const CAT_BADGE  = { 'AI도구':'badge-ai','클라우드':'badge-cloud','개발도구':'badge-dev','협업':'badge-collab','BI/디자인':'badge-bi' };
 
 const SERVICES = [
@@ -703,7 +703,7 @@ function renderServices() {
       <td><span class="badge ${CAT_BADGE[s.cat]}">${s.cat}</span></td>
       <td style="text-align:right;font-weight:600">${fmt(s.v)}</td>
       <td style="text-align:right">${fmt(s.pv)}</td>
-      <td style="text-align:right;color:${d > 0 ? '#E8000D' : '#1a7a40'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
+      <td style="text-align:right;color:${d > 0 ? '#E8000D' : '#1e6640'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
     </tr>`;
   }).join('');
 
@@ -783,7 +783,7 @@ function renderTeams() {
 
   // Team history
   const teamHistData = TEAMS.map((t, ti) => {
-    const colors = ['#E8000D','#1560bd','#1a7a40','#c07800','#6a30b0','#888'];
+    const colors = ['#E8000D','#2a2a2a','#555555','#888888','#aaaaaa','#cccccc'];
     return {
       color: colors[ti], label: t.name,
       data: MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym && r.team === t.id), 'cost') }))
@@ -805,13 +805,13 @@ function renderTeams() {
       <td style="text-align:right">${t.headcount}명</td>
       <td style="text-align:right;font-weight:600">${fmt(t.v)}</td>
       <td style="text-align:right">${fmt(t.pv)}</td>
-      <td style="text-align:right;color:${d > 0 ? '#E8000D' : '#1a7a40'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
+      <td style="text-align:right;color:${d > 0 ? '#E8000D' : '#1e6640'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
       <td style="text-align:right;color:#888">${fmt(perHead)}/인</td>
     </tr>`;
   }).join('');
 
   const legendHtml = TEAMS.map((t, ti) => {
-    const colors = ['#E8000D','#1560bd','#1a7a40','#c07800','#6a30b0','#888'];
+    const colors = ['#E8000D','#2a2a2a','#555555','#888888','#aaaaaa','#cccccc'];
     return `<span class="legend-item"><span class="legend-dot" style="background:${colors[ti]}"></span>${t.name}</span>`;
   }).join('');
 
