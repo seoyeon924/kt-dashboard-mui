@@ -48,7 +48,6 @@ body {
 .sb-select {
   width: 100%;
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
   padding: 5px 8px;
   font-size: 12px;
   color: #333;
@@ -73,10 +72,9 @@ body {
   cursor: pointer;
   transition: background 0.12s;
   user-select: none;
-  border-left: 3px solid transparent;
 }
 .sb-nav-item:hover { background: #f8f8f8; color: #222; }
-.sb-nav-item.active { color: #E8000D; font-weight: 600; border-left-color: #E8000D; background: #fff5f5; }
+.sb-nav-item.active { color: #E8000D; font-weight: 600; background: #f8f8f8; }
 .sb-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
 .sb-nav-item.active .sb-nav-dot { background: #E8000D; }
 .sb-footer {
@@ -110,7 +108,6 @@ body {
   gap: 0;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
   margin-bottom: 20px;
   overflow: hidden;
 }
@@ -138,11 +135,9 @@ body {
 .chart-card {
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
   padding: 18px 20px;
   overflow: hidden;
 }
-.chart-card.primary { border-top: 2px solid #E8000D; }
 .chart-title { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 4px; }
 .chart-subtitle { font-size: 11px; color: #aaa; margin-bottom: 12px; }
 .chart-grid { display: grid; gap: 16px; margin-bottom: 20px; }
@@ -175,7 +170,6 @@ body {
 .trend-card {
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
   padding: 16px 20px;
 }
 .trend-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
@@ -200,7 +194,6 @@ body {
 .chart-filter-label { font-size: 12px; color: #888; }
 .chart-filter-select {
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
   padding: 4px 20px 4px 8px;
   font-size: 12px;
   color: #333;
@@ -223,7 +216,7 @@ body {
   color: #555;
 }
 .legend-item { display: flex; align-items: center; gap: 5px; }
-.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-dot { width: 8px; height: 8px; flex-shrink: 0; }
 
 /* ─── TABLE ─────────────────────────────────── */
 .data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
@@ -231,7 +224,7 @@ body {
 .data-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: #fafafa; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 500; }
 .badge-ai { background: #f0f0f0; color: #333; font-weight: 600; }
 .badge-cloud { background: #f0f0f0; color: #555; }
 .badge-dev { background: #f0f0f0; color: #555; }
