@@ -846,6 +846,29 @@ function hBarChart(items, width, color = '#888') {
   return `<svg viewBox="0 0 ${width} ${chartH + 32}" width="100%" style="max-height:${chartH + 32}px">${bars}</svg>`;
 }
 
+function teamHBarClickChart(items, avgV) {
+  const W = 420;
+  const rowH = 30;
+  const labelW = 78;
+  const barMaxW = W - labelW - 76;
+  const maxV = Math.max(...items.map(t => t.v));
+  const H = items.length * rowH + 16;
+  const avgX = labelW + (avgV / maxV) * barMaxW;
+  const rows = items.map((t, i) => {
+    const bw = Math.max(4, (t.v / maxV) * barMaxW);
+    const by = i * rowH + 6;
+    const label = t.label.length > 6 ? t.label.slice(0, 6) + '..' : t.label;
+    return `<g data-team-bar="${t.id}" onclick="selectTeamDrill('${t.id}')" style="cursor:pointer">
+      <rect data-team-rect="${t.id}" x="${labelW}" y="${by}" width="${bw}" height="${rowH - 8}" fill="${t.color}" rx="2" fill-opacity="0.45"/>
+      <text x="${labelW - 5}" y="${by + (rowH - 8) / 2 + 4}" text-anchor="end" font-size="10" fill="${CHART.barName}">${label}</text>
+      <text x="${labelW + bw + 5}" y="${by + (rowH - 8) / 2 + 4}" font-size="10" fill="${CHART.barValue}" font-weight="600">${fmt(t.v)}</text>
+    </g>`;
+  }).join('');
+  const avgLine = `<line x1="${avgX}" y1="2" x2="${avgX}" y2="${H - 8}" stroke="${T.accent}" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.7"/>
+    <text x="${avgX + 3}" y="11" font-size="9" fill="${T.accent}" opacity="0.85">전사 평균</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${rows}${avgLine}</svg>`;
+}
+
 function teamClickBarChart(items) {
   const n = items.length;
   const W = 420;
@@ -1184,6 +1207,8 @@ function renderTeams() {
   }));
   const teamColorMap = Object.fromEntries(TEAMS.map((t, ti) => [t.id, teamColors[ti]]));
   const teamChartData = teamData.map(t => ({ id: t.id, label: t.label, v: t.v, color: teamColorMap[t.id] }));
+  const phChartData = [...teamData].sort((a, b) => (b.v / b.headcount) - (a.v / a.headcount))
+    .map(t => ({ id: t.id, label: t.label, v: Math.round(t.v / t.headcount), color: teamColorMap[t.id] }));
   const tableRows = teamData.map(t => {
     const d    = delta(t.v, t.pv);
     const yoyD = delta(t.v, t.yv);
@@ -1228,10 +1253,15 @@ function renderTeams() {
       </div>
     </div>
     <div class="chart-grid col-2" style="margin-bottom:20px;">
-      <div class="chart-card">
+      <div class="chart-card" style="display:flex;flex-direction:column;gap:0;">
         <div class="chart-title">어느 팀이 예산을 가장 많이 쓰는가?</div>
         <div class="chart-subtitle">막대 클릭 → 오른쪽에서 서비스 구성 드릴다운</div>
         ${teamClickBarChart(teamChartData)}
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--c-border)">
+          <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:2px">1인당 비용이 전사 평균을 초과하는 팀은?</div>
+          <div class="chart-subtitle">전사 평균 ${fmt(perHeadAvg)}/인 기준 점선 · 클릭으로 동일 드릴다운</div>
+        </div>
+        ${teamHBarClickChart(phChartData, perHeadAvg)}
       </div>
       <div class="chart-card">
         <div class="chart-title" id="drill-title">← 팀을 선택하면 원인을 분석합니다</div>
