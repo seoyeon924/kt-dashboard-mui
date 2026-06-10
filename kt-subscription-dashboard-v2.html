@@ -1661,34 +1661,38 @@ function renderTeams() {
       </div>
     </div>
     <div class="chart-grid col-2" style="margin-bottom:20px;">
-      <div class="chart-card" style="display:flex;flex-direction:column;gap:0;">
-        <div class="chart-title">어느 팀이 예산을 가장 많이 쓰는가?</div>
-        <div class="chart-subtitle">막대 클릭 → 오른쪽에서 서비스 구성 드릴다운</div>
-        ${teamClickBarChart(teamChartData)}
-        <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--c-border)">
+      <div class="chart-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <div class="chart-title">어느 팀이 예산을 가장 많이 쓰는가?</div>
+          <div class="chart-subtitle">막대 클릭 → 오른쪽에서 서비스 구성 드릴다운</div>
+          ${teamClickBarChart(teamChartData)}
+        </div>
+        <div style="padding-top:10px;border-top:1px solid var(--c-border)">
           <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:2px">어느 팀의 비용이 가장 빠르게 증가하는가?</div>
           <div class="chart-subtitle" style="margin-bottom:3px">전월 대비 MoM · 빨강=증가 · 초록=감소 · 클릭 드릴다운</div>
+          ${teamMoMChart(teamMoMData)}
         </div>
-        ${teamMoMChart(teamMoMData)}
-        <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--c-border)">
+        <div style="padding-top:10px;border-top:1px solid var(--c-border)">
           <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:2px">1인당 비용이 전사 평균을 초과하는 팀은?</div>
           <div class="chart-subtitle" style="margin-bottom:3px">전사 평균 ${fmt(perHeadAvg)}/인 기준 점선 · 클릭 드릴다운</div>
+          ${teamHBarClickChart(phChartData, perHeadAvg)}
         </div>
-        ${teamHBarClickChart(phChartData, perHeadAvg)}
       </div>
-      <div class="chart-card">
+      <div class="chart-card" style="display:flex;flex-direction:column;">
         <div class="chart-title" id="drill-title">← 팀을 선택하면 원인을 분석합니다</div>
         <div class="chart-subtitle">서비스별 구독비용 · 이번 달 · 전월 대비 MoM</div>
-        <table class="data-table">
-          <thead><tr>
-            <th>서비스</th><th>카테고리</th>
-            <th style="text-align:right">이번 달</th>
-            <th style="text-align:right">MoM</th>
-          </tr></thead>
-          <tbody id="drill-tbody">
-            <tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:20px">왼쪽 차트에서 팀 선택</td></tr>
-          </tbody>
-        </table>
+        <div style="flex:1;overflow-y:auto;max-height:320px;">
+          <table class="data-table">
+            <thead><tr>
+              <th>서비스</th><th>카테고리</th>
+              <th style="text-align:right">이번 달</th>
+              <th style="text-align:right">MoM</th>
+            </tr></thead>
+            <tbody id="drill-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:20px">왼쪽 차트에서 팀 선택</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div id="team-mini-sim"></div>
       </div>
     </div>
