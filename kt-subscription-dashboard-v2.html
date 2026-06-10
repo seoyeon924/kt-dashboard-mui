@@ -164,6 +164,10 @@ body {
 .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--c-text-sub); }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-dot { width: 8px; height: 8px; flex-shrink: 0; }
+.sim-slider { width:100%; height:3px; -webkit-appearance:none; appearance:none; outline:none; background:var(--c-border); border-radius:2px; cursor:pointer; }
+.sim-slider::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:var(--c-accent); cursor:pointer; box-shadow:0 0 0 2px rgba(0,0,0,0.12); }
+.sim-slider::-moz-range-thumb { width:13px; height:13px; border-radius:50%; background:var(--c-accent); cursor:pointer; border:none; }
+.sim-btn { padding:5px 12px; font-size:11px; background:var(--c-hover); border:1px solid var(--c-border); border-radius:4px; cursor:pointer; color:var(--c-text); }
 
 /* ─── TABLE ────────────────────────────────────── */
 .data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
@@ -508,6 +512,9 @@ body[data-concept="notion-brutalist"] .sb-nav-item { font-size: 13px; }
     </div>
     <div class="sb-nav-item" data-tab="cost" onclick="navigate('cost')">
       <span class="sb-nav-dot"></span> 비용분석
+    </div>
+    <div class="sb-nav-item" data-tab="sim" onclick="navigate('sim')">
+      <span class="sb-nav-dot"></span> 시뮬레이션
     </div>
   </nav>
 
@@ -1151,6 +1158,355 @@ function renderServices() {
   </div>`;
 }
 
+// ─── ML HELPERS (pure JS, no CDN) ────────────────────────────────
+function linRegModel(ys) {
+  const n = ys.length;
+  const sx = n*(n-1)/2, sy = ys.reduce((a,b)=>a+b,0);
+  const sxy = ys.reduce((a,y,i)=>a+i*y,0);
+  const sx2 = n*(n-1)*(2*n-1)/6;
+  const b = (n*sxy - sx*sy) / (n*sx2 - sx*sx);
+  const a = (sy - b*sx) / n;
+  return { a, b, predict: x => a + b*x };
+}
+
+function holtSmooth(ys, alpha=0.35, beta=0.1, nFwd=6) {
+  let l = ys[0], b = ys[1] - ys[0];
+  const fit = [l];
+  for (let i = 1; i < ys.length; i++) {
+    const lp = l, bp = b;
+    l = alpha * ys[i] + (1-alpha) * (lp + bp);
+    b = beta * (l - lp) + (1-beta) * bp;
+    fit.push(l + b);
+  }
+  const fwd = Array.from({length: nFwd}, (_, h) => l + (h+1)*b);
+  return { fit, fwd };
+}
+
+function zScore(ys, thr=2.0) {
+  const mu = ys.reduce((a,b)=>a+b,0)/ys.length;
+  const sigma = Math.sqrt(ys.reduce((a,y)=>a+(y-mu)**2,0)/ys.length);
+  return ys.map(y => sigma > 0 && Math.abs(y-mu)/sigma > thr);
+}
+
+function forecastChartSVG(historical, holtFwd, lr, anomalies, W, H) {
+  const pad = {l:52, r:16, t:18, b:28};
+  const PW = W - pad.l - pad.r;
+  const PH = H - pad.t - pad.b;
+  const nH = historical.length, nF = holtFwd.length, nT = nH + nF;
+  const allV = [...historical.map(d=>d.v), ...holtFwd.filter(v=>v>0)];
+  const minV = Math.min(...allV) * 0.88;
+  const maxV = Math.max(...allV) * 1.08;
+  const range = maxV - minV || 1;
+  const X = i => pad.l + (i / (nT-1)) * PW;
+  const Y = v => pad.t + PH - Math.max(0, Math.min(1, (v - minV) / range)) * PH;
+
+  const hPts = historical.map((d,i) => X(i)+','+Y(d.v)).join('L');
+  const area = 'M'+hPts+' L'+X(nH-1)+','+Y(minV)+' L'+X(0)+','+Y(minV)+'Z';
+  const holtLine = 'M'+X(nH-1)+','+Y(historical[nH-1].v)+holtFwd.map((v,i)=>' L'+X(nH+i)+','+Y(v)).join('');
+  const linY0 = Math.max(minV*0.5, lr.predict(0));
+  const linY1 = lr.predict(nT-1);
+  const linLine = 'M'+X(0)+','+Y(Math.min(maxV,Math.max(minV,linY0)))+' L'+X(nT-1)+','+Y(Math.min(maxV*1.2,Math.max(minV*0.5,linY1)));
+
+  const dots = historical.map((d,i) => anomalies[i]
+    ? '<circle cx="'+X(i)+'" cy="'+Y(d.v)+'" r="4.5" fill="#ef7d86" stroke="white" stroke-width="1.5"/>' : '').join('');
+
+  const grid = [0,.25,.5,.75,1].map(f => {
+    const v = minV + range*f, y = Y(v);
+    return '<line x1="'+pad.l+'" x2="'+(pad.l+PW)+'" y1="'+y+'" y2="'+y+'" stroke="var(--c-border)" stroke-width="1" opacity="0.35"/>'+
+      '<text x="'+(pad.l-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="'+CHART.barName+'">'+(v/1000000).toFixed(1)+'M</text>';
+  }).join('');
+
+  const xLabels = historical.filter((_,i)=>i%3===0).map(d => {
+    const i = historical.findIndex(h=>h.label===d.label);
+    return '<text x="'+X(i)+'" y="'+(pad.t+PH+16)+'" text-anchor="middle" font-size="9" fill="'+CHART.barName+'">'+d.label+'</text>';
+  }).join('') + '<text x="'+X(nT-1)+'" y="'+(pad.t+PH+16)+'" text-anchor="middle" font-size="9" fill="'+CHART.barName+'" opacity="0.6">+6M</text>';
+
+  const divX = X(nH-1);
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%">'+
+    '<rect x="'+divX+'" y="'+pad.t+'" width="'+(pad.l+PW-divX)+'" height="'+PH+'" fill="var(--c-accent)" opacity="0.04"/>'+
+    grid+'<path d="'+area+'" fill="'+T.accent+'" opacity="0.1"/>'+
+    '<path d="M'+hPts+'" fill="none" stroke="'+T.accent+'" stroke-width="2"/>'+
+    '<path d="'+linLine+'" fill="none" stroke="#efb05d" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.65"/>'+
+    '<path d="'+holtLine+'" fill="none" stroke="'+T.accent+'" stroke-width="2" stroke-dasharray="5,3" opacity="0.75"/>'+
+    dots+xLabels+
+    '<line x1="'+divX+'" y1="'+pad.t+'" x2="'+divX+'" y2="'+(pad.t+PH)+'" stroke="var(--c-text-dim)" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>'+
+    '<text x="'+(divX+4)+'" y="'+(pad.t+11)+'" font-size="9" fill="var(--c-text-dim)">예측 →</text>'+
+    '</svg>';
+}
+
+// ─── SIMULATION FUNCTIONS ─────────────────────────────────────────
+function updateSim() {
+  const cur = DATA.filter(r => r.ym === curYm);
+  const totalCur = sumBy(cur, 'cost');
+  let totalSim = 0;
+  const catSim = {};
+  const svcSavings = [];
+
+  SERVICES.forEach(s => {
+    const slEl = document.getElementById('sim-' + s.id);
+    const cxEl = document.getElementById('simx-' + s.id);
+    if (!slEl) return;
+    const pct  = cxEl?.checked ? -100 : parseInt(slEl.value);
+    const orig = sumBy(cur.filter(r => r.svc === s.id), 'cost');
+    const sim  = Math.max(0, orig * (1 + pct / 100));
+    totalSim  += sim;
+    const saved = orig - sim;
+    if (saved !== 0) svcSavings.push({ name: s.name, saved });
+
+    const key = s.cat.replace(/\//g,'');
+    if (!catSim[key]) catSim[key] = { orig:0, sim:0 };
+    catSim[key].orig += orig;
+    catSim[key].sim  += sim;
+
+    const pctEl = document.getElementById('sim-pct-' + s.id);
+    const dEl   = document.getElementById('sim-delta-' + s.id);
+    if (pctEl) { pctEl.textContent = (pct>=0?'+':'')+pct+'%'; pctEl.style.color = pct<0?T.positive:pct>0?T.accent:'var(--c-text-dim)'; }
+    if (dEl)   { dEl.textContent = saved===0?'—':(saved>0?'▼ ':'▲ ')+fmt(Math.abs(Math.round(saved))); dEl.style.color = saved>0?T.positive:saved<0?T.accent:'var(--c-text-dim)'; }
+  });
+
+  const savings = totalCur - totalSim;
+  const afterEl = document.getElementById('sim-after');
+  const savEl   = document.getElementById('sim-savings');
+  const pctEl2  = document.getElementById('sim-savings-pct');
+  const signEl  = document.getElementById('sim-savings-sign');
+  if (afterEl) afterEl.textContent = fmt(Math.round(totalSim));
+  if (savEl)  { savEl.textContent = fmt(Math.abs(Math.round(savings))); savEl.style.color = savings>0?T.positive:T.accent; }
+  if (pctEl2) pctEl2.textContent = (Math.abs(savings/totalCur)*100).toFixed(1)+'%';
+  if (signEl) signEl.textContent = savings>0?'절감':'증가';
+
+  CATEGORIES.forEach(cat => {
+    const key = cat.replace(/\//g,'');
+    const d = catSim[key] || {orig:0, sim:0};
+    const diff = d.sim - d.orig;
+    const sEl = document.getElementById('simcat-'+key);
+    const dEl = document.getElementById('simcat-d-'+key);
+    if (sEl) sEl.textContent = fmt(Math.round(d.sim));
+    if (dEl) { dEl.textContent = diff===0?'—':(diff<0?'▼ ':'▲ ')+fmt(Math.abs(Math.round(diff))); dEl.style.color = diff<0?T.positive:diff>0?T.accent:'var(--c-text-dim)'; }
+  });
+
+  const topEl = document.getElementById('sim-top-savings');
+  if (topEl) {
+    const sorted = [...svcSavings].sort((a,b)=>b.saved-a.saved).slice(0,5);
+    topEl.innerHTML = sorted.length===0
+      ? '슬라이더를 조정하면 여기에 표시됩니다.'
+      : sorted.map(s=>'<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px"><span>'+s.name+'</span><span style="font-weight:600;color:'+(s.saved>0?T.positive:T.accent)+'">'+(s.saved>0?'▼ ':'▲ ')+fmt(Math.abs(Math.round(s.saved)))+'</span></div>').join('');
+  }
+}
+
+function resetSim() {
+  document.querySelectorAll('.sim-slider').forEach(el => { el.value = 0; });
+  document.querySelectorAll('[id^="simx-"]').forEach(el => { el.checked = false; });
+  updateSim();
+}
+
+function applySim20() {
+  const cur = DATA.filter(r => r.ym === curYm);
+  const prev = DATA.filter(r => r.ym === prevYm);
+  SERVICES.forEach(s => {
+    const v  = sumBy(cur.filter(r=>r.svc===s.id),'cost');
+    const pv = sumBy(prev.filter(r=>r.svc===s.id),'cost');
+    if (delta(v,pv) > 15) { const sl = document.getElementById('sim-'+s.id); if (sl) sl.value = -20; }
+  });
+  updateSim();
+}
+
+function updateTeamSim(teamId) {
+  const cur = DATA.filter(r => r.ym === curYm && r.team === teamId);
+  const base = sumBy(cur, 'cost');
+  let adj = 0;
+  document.querySelectorAll('[id^="tsim-"]').forEach(el => {
+    if (el.type !== 'range') return;
+    const svcId = el.id.replace('tsim-','');
+    const pct = parseInt(el.value);
+    adj += sumBy(cur.filter(r=>r.svc===svcId),'cost') * pct / 100;
+    const lbl = document.getElementById('tsim-pct-'+svcId);
+    if (lbl) { lbl.textContent=(pct>=0?'+':'')+pct+'%'; lbl.style.color=pct<0?T.positive:pct>0?T.accent:'var(--c-text-dim)'; }
+  });
+  const simTotal = base + adj;
+  const totalEl = document.getElementById('tsim-total');
+  if (totalEl) {
+    const saved = base - simTotal;
+    totalEl.innerHTML = fmt(Math.round(simTotal)) +
+      (saved>0?' <span style="font-size:10px;color:'+T.positive+'">(▼ '+fmt(Math.round(saved))+' 절감)</span>':'');
+  }
+}
+
+function updateCostSim() {
+  const cur = DATA.filter(r => r.ym === curYm);
+  const totalCur = sumBy(cur, 'cost');
+  let totalSim = totalCur;
+  document.querySelectorAll('[id^="csim-"]').forEach(el => {
+    if (el.type !== 'range') return;
+    const svcId = el.id.replace('csim-','');
+    const pct = parseInt(el.value);
+    totalSim += sumBy(cur.filter(r=>r.svc===svcId),'cost') * pct / 100;
+    const lbl = document.getElementById('csim-pct-'+svcId);
+    if (lbl) { lbl.textContent=(pct>=0?'+':'')+pct+'%'; lbl.style.color=pct<0?T.positive:pct>0?T.accent:'var(--c-text-dim)'; }
+  });
+  const saved = totalCur - totalSim;
+  const aEl = document.getElementById('cost-sim-after');
+  const sEl = document.getElementById('cost-sim-savings');
+  if (aEl) aEl.textContent = fmt(Math.round(totalSim));
+  if (sEl) { sEl.textContent=(saved>=0?'▼ ':'▲ ')+fmt(Math.abs(Math.round(saved))); sEl.style.color=saved>0?T.positive:T.accent; }
+}
+
+// ─── RENDER SIMULATION TAB ────────────────────────────────────────
+function renderSimulation() {
+  const base = getFilteredBase();
+  const cur  = base.filter(r => r.ym === curYm);
+  const totalCur = sumBy(cur, 'cost');
+
+  const monthlyData = MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r=>r.ym===m.ym),'cost') }));
+  const ys   = monthlyData.map(d => d.v);
+  const lr   = linRegModel(ys);
+  const holt = holtSmooth(ys, 0.35, 0.1, 6);
+  const anom = zScore(ys, 2.0);
+
+  const aiData = MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r=>r.ym===m.ym&&SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'),'cost') }));
+  const aiYs   = aiData.map(d => d.v);
+  const aiHolt = holtSmooth(aiYs, 0.35, 0.1, 6);
+  const aiLr   = linRegModel(aiYs);
+  const aiAnom = zScore(aiYs, 2.0);
+  const cloudLr = linRegModel(MONTHS.map(m => sumBy(base.filter(r=>r.ym===m.ym&&SERVICES.find(s=>s.id===r.svc)?.cat==='클라우드'),'cost')));
+
+  let crossoverMsg = '현 성장률에서 AI→클라우드 역전은 발생하지 않을 전망';
+  if (aiLr.b > cloudLr.b) {
+    const cx = (cloudLr.a - aiLr.a) / (aiLr.b - cloudLr.b);
+    if (cx > ys.length - 1) crossoverMsg = '현 추세 지속 시 약 ' + Math.round(cx-(ys.length-1)) + '개월 후 AI 비용이 클라우드를 역전';
+    else crossoverMsg = 'AI 비용이 이미 클라우드를 추월한 성장 곡선';
+  }
+
+  const last3 = ys.slice(-3).reduce((a,b)=>a+b,0)/3;
+  const prev3 = ys.slice(-6,-3).reduce((a,b)=>a+b,0)/3;
+  const accel = ((last3-prev3)/prev3*100).toFixed(1);
+  const holtIn6 = holt.fwd[5];
+  const growthIn6 = ((holtIn6-totalCur)/totalCur*100).toFixed(1);
+  const anomCount = anom.filter(Boolean).length;
+
+  const svcData = SERVICES.map(s => ({ id:s.id, name:s.name, cat:s.cat, v:sumBy(cur.filter(r=>r.svc===s.id),'cost') })).sort((a,b)=>b.v-a.v);
+
+  const sliderRows = svcData.map(s =>
+    '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--c-border-sub)">'+
+    '<div style="flex:0 0 88px;font-size:11px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="'+s.name+'">'+s.name+'</div>'+
+    '<span class="badge '+(CAT_BADGE[s.cat]||'')+'" style="flex-shrink:0;font-size:9px">'+s.cat+'</span>'+
+    '<input type="range" id="sim-'+s.id+'" class="sim-slider" min="-50" max="50" value="0" oninput="updateSim()" style="flex:1;min-width:60px">'+
+    '<span id="sim-pct-'+s.id+'" style="flex:0 0 34px;text-align:right;font-size:11px;color:var(--c-text-dim)">0%</span>'+
+    '<label style="display:flex;align-items:center;gap:3px;font-size:10px;cursor:pointer;flex-shrink:0">'+
+    '<input type="checkbox" id="simx-'+s.id+'" onchange="updateSim()"> 해지</label>'+
+    '<span id="sim-delta-'+s.id+'" style="flex:0 0 64px;text-align:right;font-size:10px;color:var(--c-text-dim)">—</span>'+
+    '</div>'
+  ).join('');
+
+  const catRows = CATEGORIES.map(cat => {
+    const key = cat.replace(/\//g,'');
+    const v = sumBy(cur.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat===cat),'cost');
+    return '<tr><td>'+cat+'</td><td style="text-align:right">'+fmt(v)+'</td>'+
+      '<td style="text-align:right" id="simcat-'+key+'">'+fmt(v)+'</td>'+
+      '<td style="text-align:right;color:var(--c-text-dim)" id="simcat-d-'+key+'">—</td></tr>';
+  }).join('');
+
+  return `
+  <div class="page-header">
+    <div class="page-header-top">
+      <div><div class="page-title">시뮬레이션 &amp; 예측</div><div class="page-subtitle">계약 협상 시뮬레이터 · Holt 지수평활 예측 · 이상값 탐지</div></div>
+      <div class="page-refresh">2025년 6월 기준 · ML: 순수 JS</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="kpi-row">
+      <div class="kpi-main">
+        <div class="kpi-label">현재 월 총비용</div>
+        <div class="kpi-value">${fmt(totalCur)}</div>
+        <div class="kpi-sub">시뮬레이션 기준점</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">시뮬레이션 후 총비용</div>
+        <div class="kpi-value" id="sim-after">${fmt(totalCur)}</div>
+        <div class="kpi-sub">슬라이더 조정 결과</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">예상 절감액</div>
+        <div class="kpi-value" id="sim-savings" style="color:var(--c-positive)">₩ 0</div>
+        <div class="kpi-sub"><span id="sim-savings-pct">0.0%</span> <span id="sim-savings-sign">절감</span></div>
+      </div>
+    </div>
+    <div class="chart-grid col-2" style="margin-bottom:20px">
+      <div class="chart-card">
+        <div class="chart-title">계약 협상 시뮬레이터</div>
+        <div class="chart-subtitle">슬라이더: -50~+50% 조정 · 체크박스: 해지</div>
+        <div style="margin-top:8px;max-height:400px;overflow-y:auto;padding-right:2px">
+          <div style="display:flex;gap:8px;padding:3px 0 6px;border-bottom:1px solid var(--c-border);font-size:10px;color:var(--c-text-dim);font-weight:600">
+            <div style="flex:0 0 88px">서비스</div><div style="flex-shrink:0;width:46px">분류</div>
+            <div style="flex:1">조정</div><div style="flex:0 0 34px;text-align:right">비율</div>
+            <div style="flex-shrink:0;width:46px;text-align:center">해지</div>
+            <div style="flex:0 0 64px;text-align:right">절감액</div>
+          </div>
+          ${sliderRows}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="sim-btn" onclick="resetSim()">초기화</button>
+          <button class="sim-btn" onclick="applySim20()">MoM 15%↑ 서비스 → -20%</button>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">카테고리별 절감 효과</div>
+        <div class="chart-subtitle">현재 vs 시뮬레이션 실시간 비교</div>
+        <table class="data-table" style="margin-top:8px">
+          <thead><tr><th>카테고리</th><th style="text-align:right">현재</th><th style="text-align:right">시뮬레이션</th><th style="text-align:right">차이</th></tr></thead>
+          <tbody>${catRows}</tbody>
+        </table>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--c-border)">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px">절감 상위 서비스</div>
+          <div id="sim-top-savings" style="font-size:11px;color:var(--c-text-dim)">슬라이더를 조정하면 여기에 표시됩니다.</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="chart-title">비용 예측 — Holt 이중지수평활법 (α=0.35, β=0.1)</div>
+      <div class="chart-subtitle">18개월 실적 + 향후 6개월 예측 · 빨간 점 = 이상값(|z|>2σ) · 점선 노랑 = 선형회귀 추세</div>
+      ${forecastChartSVG(monthlyData, holt.fwd, lr, anom, 900, 200)}
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-top:8px;color:var(--c-text-dim)">
+        <span style="color:${T.accent}">— 실적</span><span>-- Holt 예측</span>
+        <span style="color:#efb05d">-- 선형회귀 추세</span><span style="color:#ef7d86">● 이상값 (|z|>2.0σ)</span>
+      </div>
+    </div>
+    <div class="chart-grid col-2">
+      <div class="chart-card">
+        <div class="chart-title">AI 기반 비용 인사이트</div>
+        <div class="chart-subtitle">Holt 지수평활 + Z-score 이상탐지 · 순수 JS</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <div style="padding:10px 12px;background:var(--c-hover);border-radius:6px">
+            <div style="font-size:10px;color:var(--c-text-dim);margin-bottom:2px">6개월 후 예상 총비용 (Holt)</div>
+            <div style="font-size:20px;font-weight:700">${fmt(Math.round(holtIn6))}</div>
+            <div style="font-size:11px;color:${parseFloat(growthIn6)>0?T.accent:T.positive}">현재 대비 ${parseFloat(growthIn6)>0?'+':''}${growthIn6}%</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--c-hover);border-radius:6px">
+            <div style="font-size:10px;color:var(--c-text-dim);margin-bottom:2px">최근 3개월 vs 직전 3개월 비용 가속도</div>
+            <div style="font-size:20px;font-weight:700;color:${parseFloat(accel)>0?T.accent:T.positive}">${parseFloat(accel)>0?'+':''}${accel}%</div>
+            <div style="font-size:11px;color:var(--c-text-dim)">비용 증가율이 ${parseFloat(accel)>0?'가속':'감속'} 중</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--c-hover);border-radius:6px">
+            <div style="font-size:10px;color:var(--c-text-dim);margin-bottom:2px">통계적 이상값 발생 (|z|>2σ)</div>
+            <div style="font-size:20px;font-weight:700;color:${anomCount>0?T.accent:'inherit'}">${anomCount}건</div>
+            <div style="font-size:11px;color:var(--c-text-dim)">차트에서 빨간 점으로 표시</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">AI vs 클라우드 역전 예측</div>
+        <div class="chart-subtitle">선형회귀 기반 교차점 추정</div>
+        <div style="padding:10px 12px;background:var(--c-hover);border-radius:6px;margin:10px 0 8px">
+          <div style="font-size:12px;font-weight:600">${crossoverMsg}</div>
+        </div>
+        ${forecastChartSVG(aiData, aiHolt.fwd, aiLr, aiAnom, 430, 160)}
+        <div style="display:flex;gap:12px;font-size:10px;margin-top:6px;color:var(--c-text-dim)">
+          <span style="color:${T.accent}">— AI 도구 실적</span><span>-- Holt 예측</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function selectTeamDrill(teamId) {
   drillTeam = teamId;
   document.querySelectorAll('[data-team-rect]').forEach(rect => {
@@ -1169,7 +1525,7 @@ function selectTeamDrill(teamId) {
   const rows = SERVICES.map(s => {
     const v  = cur.filter(r => r.svc === s.id).reduce((a, r) => a + r.cost, 0);
     const pv = prev.filter(r => r.svc === s.id).reduce((a, r) => a + r.cost, 0);
-    return { name: s.name, cat: s.cat, v, d: !pv ? 0 : ((v - pv) / pv * 100) };
+    return { id: s.id, name: s.name, cat: s.cat, v, d: !pv ? 0 : ((v - pv) / pv * 100) };
   }).filter(r => r.v > 0).sort((a, b) => b.v - a.v);
   tbodyEl.innerHTML = rows.map(r =>
     '<tr>' +
@@ -1179,6 +1535,26 @@ function selectTeamDrill(teamId) {
     '<td style="text-align:right;color:' + (r.d > 0 ? T.accent : T.positive) + '">' + (r.d > 0 ? '▲' : '▼') + ' ' + Math.abs(r.d).toFixed(1) + '%</td>' +
     '</tr>'
   ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:16px">데이터 없음</td></tr>';
+
+  // Option C: team mini-simulator
+  const miniSimEl = document.getElementById('team-mini-sim');
+  if (miniSimEl) {
+    const top4 = rows.slice(0, 4);
+    const teamTotal = rows.reduce((a,r)=>a+r.v,0);
+    miniSimEl.innerHTML =
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--c-border)">' +
+      '<div style="font-size:12px;font-weight:600;margin-bottom:2px">이 팀 비용을 줄이려면?</div>' +
+      '<div style="font-size:10px;color:var(--c-text-dim);margin-bottom:8px">상위 서비스 조정 (-50~0%)</div>' +
+      top4.map(r =>
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<div style="flex:0 0 76px;font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="'+r.name+'">'+r.name+'</div>' +
+        '<input type="range" id="tsim-'+r.id+'" class="sim-slider" min="-50" max="0" value="0" style="flex:1" oninput="updateTeamSim(\''+teamId+'\')">' +
+        '<span id="tsim-pct-'+r.id+'" style="flex:0 0 28px;text-align:right;font-size:10px;color:var(--c-text-dim)">0%</span>' +
+        '</div>'
+      ).join('') +
+      '<div style="font-size:11px;margin-top:4px;color:var(--c-text-dim)">조정 후: <strong id="tsim-total">'+fmt(teamTotal)+'</strong></div>' +
+      '</div>';
+  }
 }
 
 function renderTeams() {
@@ -1276,6 +1652,7 @@ function renderTeams() {
             <tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:20px">왼쪽 차트에서 팀 선택</td></tr>
           </tbody>
         </table>
+        <div id="team-mini-sim"></div>
       </div>
     </div>
     <div class="chart-card" style="margin-bottom:20px;">
@@ -1333,7 +1710,7 @@ function renderCost() {
     else if (d > 15)  action = '담당팀 보고 요청';
     else if (d > 5)   action = '다음 분기 검토';
     else              action = null;
-    return { name: s.name, cat: s.cat, v, d, budgetPct, expiryMonths, expiryStr, action };
+    return { id: s.id, name: s.name, cat: s.cat, v, d, budgetPct, expiryMonths, expiryStr, action };
   }).filter(s => s.action !== null).sort((a, b) => b.d - a.d);
   const optRows = optItems.slice(0, 8).map(s => {
     const expBadge = s.expiryMonths !== null && s.expiryMonths <= 3
@@ -1413,6 +1790,22 @@ function renderCost() {
         </tr></thead>
         <tbody>${optRows || `<tr><td colspan="7" style="text-align:center;color:var(--c-text-muted);padding:20px">최적화 대상 없음</td></tr>`}</tbody>
       </table>
+      ${optItems.length > 0 ? `<div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--c-border)">
+        <div class="chart-title" style="font-size:13px">빠른 절감 시뮬레이션</div>
+        <div class="chart-subtitle" style="margin-bottom:10px">재검토 대상 서비스 협상 시뮬레이션 (-50~0%)</div>
+        ${optItems.slice(0,8).map(s =>
+          '<div style="display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--c-border-sub)">' +
+          '<div style="flex:0 0 100px;font-size:11px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + s.name + '</div>' +
+          '<input type="range" id="csim-' + s.id + '" class="sim-slider" min="-50" max="0" value="0" oninput="updateCostSim()" style="flex:1">' +
+          '<span id="csim-pct-' + s.id + '" style="flex:0 0 30px;text-align:right;font-size:11px;color:var(--c-text-dim)">0%</span>' +
+          '<span style="flex:0 0 72px;text-align:right;font-size:11px;color:var(--c-text-dim)">' + fmt(s.v) + '</span>' +
+          '</div>'
+        ).join('')}
+        <div style="margin-top:10px;font-size:12px;color:var(--c-text-dim)">
+          절감 적용 후 총비용: <strong id="cost-sim-after">${fmt(totalCur)}</strong>
+          &nbsp;&nbsp; 절감액: <strong id="cost-sim-savings" style="color:var(--c-positive)">₩ 0</strong>
+        </div>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -1441,6 +1834,7 @@ function renderPage() {
       }
       break;
     case 'cost':     el.innerHTML = renderCost();     break;
+    case 'sim':      el.innerHTML = renderSimulation(); break;
   }
 }
 
