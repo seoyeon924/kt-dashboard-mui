@@ -1,27 +1,54 @@
 import React, { useState } from 'react'
 import {
-  ThemeProvider, CssBaseline, useTheme,
+  ThemeProvider, CssBaseline, useTheme, GlobalStyles,
   Box, Paper, Stack, Grid,
   Tabs, Tab, Typography, Chip,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   ToggleButtonGroup, ToggleButton,
   Alert,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { THEMES } from './themes'
 
-// ══ 공통 서브컴포넌트 ══
+// ── useDash: theme.dashboard 커스텀 토큰 읽기 ──
+function useDash() {
+  const t = useTheme()
+  return t.dashboard || {
+    bodyBg: t.palette.background.default,
+    headerBg: t.palette.background.paper,
+    headerAccent: t.palette.primary.main,
+    kpiAlpha: 0.07, kpiBorderAlpha: 0.2,
+    storyBg: 'transparent', storyBorder: t.palette.primary.main,
+    actionColors: [t.palette.error.main, t.palette.warning.main, t.palette.success.main],
+    paperSx: {},
+    transition: '',
+  }
+}
+
+// ── DashCard: theme.dashboard.paperSx를 자동 적용하는 Paper ──
+function DashCard({ children, sx = {}, ...props }) {
+  const d = useDash()
+  return (
+    <Paper elevation={0} sx={{ ...d.paperSx, transition: d.transition, ...sx }} {...props}>
+      {children}
+    </Paper>
+  )
+}
+
+// ══ 서브컴포넌트 ══
 
 function TopBar({ title, sub, meta }) {
-  const t = useTheme()
+  const d = useDash()
   return (
     <Box sx={{
-      bgcolor: t.palette.mode === 'dark' ? t.palette.background.paper : '#1A1916',
-      px: 3, py: 2.5, display: 'flex', alignItems: 'flex-end',
+      background: d.headerBg,
+      px: 3, py: 2.5,
+      display: 'flex', alignItems: 'flex-end',
       justifyContent: 'space-between', gap: 2,
-      borderBottom: `3px solid ${t.palette.primary.main}`,
+      borderBottom: `3px solid ${d.headerAccent}`,
     }}>
       <Box>
-        <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '19px', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+        <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '18px', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
           {title}
         </Typography>
         <Typography sx={{ color: 'rgba(255,255,255,.35)', fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', mt: 0.5, letterSpacing: '0.03em' }}>
@@ -38,7 +65,9 @@ function TopBar({ title, sub, meta }) {
 function SecHeader({ tag, label }) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 3 }}>
-      <Chip label={tag} color="primary" size="small" sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: 1, height: '22px' }} />
+      <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'text.disabled', fontWeight: 700 }}>
+        {tag}
+      </Typography>
       <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color: 'text.secondary' }}>{label}</Typography>
       <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
     </Box>
@@ -47,26 +76,34 @@ function SecHeader({ tag, label }) {
 
 function KPIStrip() {
   const t = useTheme()
+  const d = useDash()
   const kpis = [
-    { label: '전체 예산 달성률', value: '112.8%', color: 'error',   badge: '목표 ≤105%' },
-    { label: 'Sonnet 초과율',   value: '+31.2%', color: 'error',   badge: '5개월 연속' },
-    { label: 'Gemini 오류율',   value: '5.2%',   color: 'error',   badge: '경고 기준 2%' },
-    { label: '일일 Burn Rate',  value: '$87.4/일',color: 'warning', badge: '예산 $66.7/일' },
-    { label: '비용 효율 지수',  value: 'Haiku 6.7×', color: 'success', badge: '전환 기회' },
+    { label: '전체 예산 달성률', value: '112.8%', status: '↑ 초과', badge: '목표 ≤105%' },
+    { label: 'Sonnet 초과율',   value: '+31.2%', status: '5개월 연속', badge: '초과 지속' },
+    { label: 'Gemini 오류율',   value: '5.2%',   status: '↑ 경고',    badge: '기준 2%' },
+    { label: '일일 Burn Rate',  value: '$87.4',  status: '/일',        badge: '예산 $66.7' },
+    { label: '비용 효율 지수',  value: '6.7×',   status: 'Haiku',      badge: '전환 기회' },
   ]
   return (
     <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-      {kpis.map(({ label, value, color, badge }) => (
+      {kpis.map(({ label, value, status, badge }) => (
         <Grid item xs={6} sm={4} md key={label}>
-          <Paper elevation={1} sx={{ p: 2 }}>
+          <DashCard sx={{ p: 2, '&:hover': { transform: 'none !important' } }}>
             <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '9px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'text.secondary', mb: 1 }}>
               {label}
             </Typography>
-            <Typography sx={{ fontFamily: "'Barlow',sans-serif", fontSize: '22px', fontWeight: 700, color: 'text.primary', lineHeight: 1.1, mb: 0.75 }}>
-              {value}
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 0.75 }}>
+              <Typography sx={{ fontFamily: "'Barlow',sans-serif", fontSize: '24px', fontWeight: 800, color: 'text.primary', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+                {value}
+              </Typography>
+              <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontFamily: "'JetBrains Mono',monospace" }}>
+                {status}
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: '10px', color: 'text.disabled', fontFamily: "'JetBrains Mono',monospace" }}>
+              {badge}
             </Typography>
-            <Chip label={badge} color={color} size="small" />
-          </Paper>
+          </DashCard>
         </Grid>
       ))}
     </Grid>
@@ -74,34 +111,39 @@ function KPIStrip() {
 }
 
 function StoryBlock() {
-  const t = useTheme()
+  const d = useDash()
   return (
-    <Paper elevation={1} sx={{ p: 2.5, mb: 2.5, borderLeft: `3px solid ${t.palette.primary.main}` }}>
-      <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'primary.main', mb: 1 }}>
+    <DashCard sx={{
+      p: 2.5, mb: 2.5,
+      '&:hover': { transform: 'none !important' },
+    }}>
+      <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'text.disabled', mb: 1 }}>
         Overview · 주요 인사이트
       </Typography>
       <Typography sx={{ fontSize: '13px', color: 'text.secondary', lineHeight: 1.8 }}>
-        전체 AI 서비스 비용이 예산의 <strong style={{ color: 'inherit', fontWeight: 700 }}>112.8%</strong>로 5개월 연속 초과 중.
-        Claude Sonnet이 5개월 연속 예산 초과하며 전체 초과액의 <strong style={{ color: 'inherit', fontWeight: 700 }}>72.5% 단독 차지</strong>.
-        Gemini Pro 오류율 6개월 새 <strong style={{ color: 'inherit', fontWeight: 700 }}>4.7배 상승</strong> — 즉각 점검 필요.
-        Claude Haiku 30% 전환 시 <strong style={{ color: 'inherit', fontWeight: 700 }}>월 $682 절감</strong> 가능.
+        전체 AI 서비스 비용이 예산의 <strong style={{ fontWeight: 700 }}>112.8%</strong>로 5개월 연속 초과 중.
+        Claude Sonnet이 5개월 연속 예산 초과하며 전체 초과액의 <strong style={{ fontWeight: 700 }}>72.5% 단독 차지</strong>.
+        Gemini Pro 오류율 6개월 새 <strong style={{ fontWeight: 700 }}>4.7배 상승</strong> — 즉각 점검 필요.
+        Claude Haiku 30% 전환 시 <strong style={{ fontWeight: 700 }}>월 $682 절감</strong> 가능.
       </Typography>
-    </Paper>
+    </DashCard>
   )
 }
 
 function CostChart() {
   const t = useTheme()
-  const p = t.palette.primary.main
+  const d = useDash()
+  const p = d.headerAccent
   const muted = t.palette.text.secondary
   const div = t.palette.divider
   return (
-    <Paper elevation={1} sx={{ p: 2.5, height: '100%', minHeight: 280 }}>
+    <DashCard sx={{ p: 2.5, height: '100%', minHeight: 280 }}>
       <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
         월별 전체 AI 비용 — 2월부터 예산 초과 구조화
       </Typography>
       <Typography sx={{ fontSize: '11px', color: 'text.secondary', mb: 1 }}>Jan–Jun 2026 총지출 vs 예산 $5,700 (USD)</Typography>
       <svg viewBox="0 0 460 175" style={{ display: 'block', width: '100%', height: 'auto' }}>
+
         <line x1="50" y1="10" x2="50" y2="148" stroke={div} strokeWidth="1"/>
         <line x1="50" y1="148" x2="448" y2="148" stroke={div} strokeWidth="1"/>
         <line x1="50" y1="70" x2="448" y2="70" stroke={muted} strokeDasharray="5,3" strokeWidth="1.5" opacity=".5"/>
@@ -109,11 +151,11 @@ function CostChart() {
         {[['$4K',148],['$5.7K',70],['$7K',10]].map(([l,y]) =>
           <text key={l} x="45" y={y+3} textAnchor="end" fontSize="9" fill={muted}>{l}</text>
         )}
-        <polygon points="124,64.7 198,49.8 272,49.7 346,30.5 420,36.9 420,70 346,70 272,70 198,70 124,70" fill={p} opacity=".08"/>
+        <polygon points="124,64.7 198,49.8 272,49.7 346,30.5 420,36.9 420,148 124,148" fill={alpha(p, 0.07)}/>
         <polyline points="50,98.7 124,64.7 198,49.8 272,49.7 346,30.5 420,36.9" fill="none" stroke={p} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
         {[50,124,198,272,346,420].map((x, i) => {
           const y = [98.7,64.7,49.8,49.7,30.5,36.9][i]
-          return <circle key={i} cx={x} cy={y} r={i===5?4.5:3.5} fill={i===5?p:'white'} stroke={p} strokeWidth="2"/>
+          return <circle key={i} cx={x} cy={y} r={i===5?4.5:3.5} fill={i===5?p:t.palette.background.paper} stroke={p} strokeWidth="2"/>
         })}
         {['Jan','Feb','Mar','Apr','May','Jun'].map((m,i) =>
           <text key={m} x={50+i*74} y="163" textAnchor="middle" fontSize="9" fill={muted}>{m}</text>
@@ -122,12 +164,13 @@ function CostChart() {
           <text key={i} x={50+i*74} y={y} textAnchor="middle" fontSize="9" fill={over?t.palette.error.main:muted} fontFamily="'JetBrains Mono',monospace">{l}</text>
         )}
       </svg>
-    </Paper>
+    </DashCard>
   )
 }
 
 function ServiceStatus() {
   const t = useTheme()
+  const d = useDash()
   const rows = [
     { name: 'Claude Sonnet', pct: 131, color: t.palette.error.main,   chip: '초과', chipC: 'error' },
     { name: 'Azure OpenAI',  pct: 105, color: t.palette.warning.main, chip: '경고', chipC: 'warning' },
@@ -136,14 +179,14 @@ function ServiceStatus() {
     { name: 'Gemini Pro',    pct:  91, color: t.palette.success.main, chip: '정상', chipC: 'success' },
   ]
   return (
-    <Paper elevation={1} sx={{ p: 2.5, height: '100%', minHeight: 280 }}>
+    <DashCard sx={{ p: 2.5, height: '100%', minHeight: 280 }}>
       <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>서비스별 예산 달성률</Typography>
       <Typography sx={{ fontSize: '11px', color: 'text.secondary', mb: 2 }}>6개월 평균 기준</Typography>
       <Stack spacing={1.5}>
         {rows.map(({ name, pct, color, chip, chipC }) => (
           <Box key={name} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', width: '110px', flexShrink: 0, color: 'text.primary' }}>{name}</Typography>
-            <Box sx={{ flex: 1, bgcolor: 'divider', borderRadius: 1, height: '8px', overflow: 'hidden' }}>
+            <Box sx={{ flex: 1, bgcolor: alpha(color, 0.12), borderRadius: 1, height: '10px', overflow: 'hidden' }}>
               <Box sx={{ width: `${Math.min(pct, 100)}%`, height: '100%', bgcolor: color, borderRadius: 1 }} />
             </Box>
             <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', color, fontWeight: 700, width: '36px', textAlign: 'right', flexShrink: 0 }}>{pct}%</Typography>
@@ -154,25 +197,26 @@ function ServiceStatus() {
       <Alert severity="warning" sx={{ mt: 2, py: 0.5, fontSize: '11px' }}>
         Gemini Pro 예산 내이나 오류율 5.2% — 별도 점검 필요
       </Alert>
-    </Paper>
+    </DashCard>
   )
 }
 
 function ActionItems() {
+  const d = useDash()
   const items = [
-    { p: 'P1 — 즉시', title: 'Sonnet 월별 예산 상한 설정', why: '신규 사용자 온보딩 시 예산 알림 없음. 사용자 +15명이 자동으로 초과로 연결되는 구조.' },
-    { p: 'P1 — 즉시', title: '5월 Non-Azure 오류 원인 분석', why: 'Azure 계열 정상, 비Azure 3개 동시 급등. SPOF → Azure API Gateway 프록시 검토.' },
-    { p: 'P2 — 이번 달', title: 'Haiku 30% 전환 파일럿', why: 'Sonnet 대비 6.7×. IT개발팀 30% 전환 시 월 $682 절감 = 초과액 93.5% 해소.' },
+    { p: 'P1 — 즉시', title: 'Sonnet 월별 예산 상한 설정', why: '신규 사용자 온보딩 시 예산 알림 없음. 사용자 +15명이 자동으로 초과로 연결되는 구조.', ci: 0 },
+    { p: 'P1 — 즉시', title: '5월 Non-Azure 오류 원인 분석', why: 'Azure 계열 정상, 비Azure 3개 동시 급등. SPOF → Azure API Gateway 프록시 검토.', ci: 0 },
+    { p: 'P2 — 이번 달', title: 'Haiku 30% 전환 파일럿', why: 'Sonnet 대비 6.7×. IT개발팀 30% 전환 시 월 $682 절감 = 초과액 93.5% 해소.', ci: 1 },
   ]
   return (
     <Grid container spacing={1.5}>
-      {items.map(({ p, title, why }) => (
+      {items.map(({ p, title, why, ci }) => (
         <Grid item xs={12} md={4} key={title}>
-          <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+          <DashCard sx={{ p: 2, height: '100%', '&:hover': { transform: 'none !important' } }}>
             <Typography sx={{ fontSize: '10px', fontWeight: 700, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 1 }}>{p}</Typography>
             <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.75, lineHeight: 1.45 }}>{title}</Typography>
             <Typography sx={{ fontSize: '12px', color: 'text.secondary', lineHeight: 1.65 }}>{why}</Typography>
-          </Paper>
+          </DashCard>
         </Grid>
       ))}
     </Grid>
@@ -206,6 +250,7 @@ function TabOverview() {
 // ── TAB 2 ──
 function TabCost() {
   const t = useTheme()
+  const d = useDash()
   const services = [
     { name: 'Claude Sonnet', total: 14442, share: 39.9, over: 2618, mo: '5/6', sc: 'error' },
     { name: 'GPT-4o',        total: 9079,  share: 25.1, over: 166,  mo: '3/6', sc: 'warning' },
@@ -228,7 +273,7 @@ function TabCost() {
         <SecHeader tag="BREAKDOWN" label="서비스별 6개월 누적 지출" />
         <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid item xs={12} md={7}>
-            <Paper elevation={1} sx={{ p: 2.5 }}>
+            <DashCard sx={{ p: 2.5 }}>
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 2 }}>지출 비중 — Sonnet 단독 39.9%</Typography>
               <TableContainer>
                 <Table size="small">
@@ -241,7 +286,7 @@ function TabCost() {
                   </TableRow></TableHead>
                   <TableBody>
                     {services.map(({ name, total, share, over, mo, sc }) => (
-                      <TableRow key={name} hover>
+                      <TableRow key={name} hover sx={{ bgcolor: name === 'Claude Sonnet' ? alpha(t.palette.error.main, 0.04) : 'transparent' }}>
                         <TableCell sx={{ fontWeight: name === 'Claude Sonnet' ? 700 : 400 }}>{name}</TableCell>
                         <TableCell align="right" sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12px' }}>{total.toLocaleString()}</TableCell>
                         <TableCell align="right">
@@ -257,10 +302,10 @@ function TabCost() {
                 </Table>
               </TableContainer>
               <Alert severity="error" sx={{ mt: 1.5, py: 0.5, fontSize: '11px' }}>Sonnet 초과액 $2,618 = 전체의 72.5%. 나머지 4개 합산의 3.3배.</Alert>
-            </Paper>
+            </DashCard>
           </Grid>
           <Grid item xs={12} md={5}>
-            <Paper elevation={1} sx={{ p: 2.5, height: '100%' }}>
+            <DashCard sx={{ p: 2.5, height: '100%' }}>
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>호출량 추이 — Sonnet</Typography>
               <Typography sx={{ fontSize: '11px', color: 'text.secondary', mb: 1 }}>Jan 142K → May 213K (+39.6%)</Typography>
               <svg viewBox="0 0 280 155" style={{ display: 'block', width: '100%', height: 'auto' }}>
@@ -270,7 +315,7 @@ function TabCost() {
                   const x = 10 + i*44
                   return (
                     <g key={i}>
-                      <rect x={x} y={145-h} width={34} height={h} rx="3" fill={t.palette.primary.main} opacity={i===0 ? 0.3 : 0.45 + i*0.09}/>
+                      <rect x={x} y={145-h} width={34} height={h} rx="3" fill={d.headerAccent} opacity={0.25 + i*0.1}/>
                       <text x={x+17} y="155" textAnchor="middle" fontSize="8" fill={muted}>
                         {['J','F','M','A','M','J'][i]}
                       </text>
@@ -283,11 +328,11 @@ function TabCost() {
               <Alert severity="info" sx={{ mt: 1, py: 0.5, fontSize: '11px' }}>
                 원인: 사용자 34→49명(+44%). 1인당 사용량은 -3.2%. 온보딩 예산 교육 부재.
               </Alert>
-            </Paper>
+            </DashCard>
           </Grid>
         </Grid>
         <SecHeader tag="EFFICIENCY" label="비용 효율 비교 — Haiku 전환 기회" />
-        <Paper elevation={1} sx={{ p: 2.5 }}>
+        <DashCard sx={{ p: 2.5 }}>
           <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 2 }}>토큰당 비용 효율 — Haiku 전환 시 월 $682 절감</Typography>
           <TableContainer>
             <Table size="small">
@@ -312,7 +357,7 @@ function TabCost() {
           <Alert severity="success" sx={{ mt: 1.5, py: 0.5, fontSize: '11px' }}>
             IT개발팀 Sonnet 30% → Haiku 전환 시 월 $682 절감 = 초과액 93.5% 해소.
           </Alert>
-        </Paper>
+        </DashCard>
       </Box>
     </Box>
   )
@@ -321,15 +366,15 @@ function TabCost() {
 // ── TAB 3 ──
 function TabQuality() {
   const t = useTheme()
-  const p = t.palette.primary.main
+  const d = useDash()
   const muted = t.palette.text.secondary
   const div = t.palette.divider
   const errRows = [
-    { name: 'Claude Haiku', apr: 2.1, may: 4.2, d: '+2.1%p', sc: 'error' },
-    { name: 'Gemini Pro',   apr: 2.8, may: 4.7, d: '+1.9%p', sc: 'error' },
-    { name: 'Claude Sonnet',apr: 1.7, may: 3.1, d: '+1.4%p', sc: 'error' },
-    { name: 'Azure OpenAI', apr: 1.2, may: 0.5, d: '-0.7%p', sc: 'success' },
-    { name: 'GPT-4o',       apr: 0.9, may: 0.8, d: '-0.1%p', sc: 'success' },
+    { name: 'Claude Haiku', apr: 2.1, may: 4.2, delta: '+2.1%p', sc: 'error' },
+    { name: 'Gemini Pro',   apr: 2.8, may: 4.7, delta: '+1.9%p', sc: 'error' },
+    { name: 'Claude Sonnet',apr: 1.7, may: 3.1, delta: '+1.4%p', sc: 'error' },
+    { name: 'Azure OpenAI', apr: 1.2, may: 0.5, delta: '-0.7%p', sc: 'success' },
+    { name: 'GPT-4o',       apr: 0.9, may: 0.8, delta: '-0.1%p', sc: 'success' },
   ]
   const rtRows = [
     { name: 'Claude Haiku',  ms: 380,  sc: 'success', eff: '1.0×',    task: '분류, 요약, 단순 Q&A' },
@@ -345,7 +390,7 @@ function TabQuality() {
         <SecHeader tag="ERROR RATE" label="서비스별 오류율 — 1~6월" />
         <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid item xs={12} md={7}>
-            <Paper elevation={1} sx={{ p: 2.5, minHeight: 300 }}>
+            <DashCard sx={{ p: 2.5, minHeight: 300 }}>
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>오류율 추이 — Gemini 4.7배 상승</Typography>
               <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>경고 기준선 2%(점선). 단위: %</Typography>
               <svg viewBox="0 0 460 190" style={{ display: 'block', width: '100%', height: 'auto', marginTop: '8px' }}>
@@ -354,23 +399,18 @@ function TabQuality() {
                 <line x1="50" y1="108" x2="448" y2="108" stroke={muted} strokeDasharray="5,3" strokeWidth="1.5" opacity=".5"/>
                 <text x="450" y="111" fontSize="9" fill={muted}>2%</text>
                 {[0,2,4,6].map((v,i)=><text key={v} x="45" y={150-i*35} textAnchor="end" fontSize="9" fill={muted}>{v}%</text>)}
-                {/* Gemini: 1.1,1.3,1.8,2.8,4.7,5.2 → 145,140,131,101,66,47 */}
                 <polyline points="50,145 124,140 198,131 272,101 346,66 420,47" fill="none" stroke={t.palette.error.main} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-                <circle cx="420" cy="47" r="4.5" fill={t.palette.error.main} stroke="white" strokeWidth="2"/>
+                <circle cx="420" cy="47" r="4.5" fill={t.palette.error.main} stroke={t.palette.background.paper} strokeWidth="2"/>
                 <text x="426" y="45" fontSize="9" fill={t.palette.error.main} fontWeight="700" fontFamily="'JetBrains Mono',monospace">5.2%</text>
-                {/* Sonnet: 0.8,0.9,1.2,1.7,3.1,2.8 → 147,146,140,129,95,99 */}
                 <polyline points="50,147 124,146 198,140 272,129 346,95 420,99" fill="none" stroke={t.palette.warning.main} strokeWidth="2" strokeLinejoin="round" strokeDasharray="5,2"/>
-                <circle cx="420" cy="99" r="3.5" fill={t.palette.warning.main} stroke="white" strokeWidth="2"/>
+                <circle cx="420" cy="99" r="3.5" fill={t.palette.warning.main} stroke={t.palette.background.paper} strokeWidth="2"/>
                 <text x="426" y="97" fontSize="9" fill={t.palette.warning.main} fontFamily="'JetBrains Mono',monospace">2.8%</text>
-                {/* Azure/GPT stable */}
                 <polyline points="50,148 124,144 198,143 272,131 346,148 420,147" fill="none" stroke={t.palette.success.main} strokeWidth="1.5" strokeLinejoin="round"/>
                 <text x="426" y="145" fontSize="9" fill={t.palette.success.main} fontFamily="'JetBrains Mono',monospace">0.6%</text>
-                {/* 5월 highlight */}
-                <rect x="326" y="8" width="40" height="144" rx="2" fill={`${t.palette.error.main}0D`} stroke={`${t.palette.error.main}40`} strokeWidth="1"/>
+                <rect x="326" y="8" width="40" height="144" rx="2" fill={alpha(t.palette.error.main, 0.05)} stroke={alpha(t.palette.error.main, 0.25)} strokeWidth="1"/>
                 {['Jan','Feb','Mar','Apr','May','Jun'].map((m,i)=>
                   <text key={m} x={50+i*74} y="167" textAnchor="middle" fontSize="9" fill={muted}>{m}</text>
                 )}
-                {/* legend */}
                 {[
                   [t.palette.error.main, 'Gemini', false],
                   [t.palette.warning.main, 'Sonnet', true],
@@ -382,10 +422,10 @@ function TabQuality() {
                   </g>
                 ))}
               </svg>
-            </Paper>
+            </DashCard>
           </Grid>
           <Grid item xs={12} md={5}>
-            <Paper elevation={1} sx={{ p: 2.5 }}>
+            <DashCard sx={{ p: 2.5 }}>
               <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>Apr → May 변화 — SPOF 구조</Typography>
               <Typography sx={{ fontSize: '11px', color: 'text.secondary', mb: 1.5 }}>Azure 계열만 정상. Non-Azure 3개 동시 급등.</Typography>
               <TableContainer>
@@ -397,14 +437,14 @@ function TabQuality() {
                     <TableCell>변화</TableCell>
                   </TableRow></TableHead>
                   <TableBody>
-                    {errRows.map(({ name, apr, may, d, sc }) => (
+                    {errRows.map(({ name, apr, may, delta, sc }) => (
                       <TableRow key={name} hover>
                         <TableCell sx={{ fontSize: '11px' }}>{name}</TableCell>
                         <TableCell align="right" sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '11px' }}>{apr}%</TableCell>
                         <TableCell align="right">
                           <Typography sx={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '11px', color: `${sc}.main`, fontWeight: sc==='error'?700:400 }}>{may}%</Typography>
                         </TableCell>
-                        <TableCell><Chip label={d} color={sc} size="small" sx={{ fontSize: '9px', height: '18px' }}/></TableCell>
+                        <TableCell><Chip label={delta} color={sc} size="small" sx={{ fontSize: '9px', height: '18px' }}/></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -412,11 +452,11 @@ function TabQuality() {
               </TableContainer>
               <Alert severity="error"   sx={{ mt: 1, py: 0.5, fontSize: '11px' }}>KT IDC ↔ Anthropic/Google 공통 경로 5월 장애 추정.</Alert>
               <Alert severity="success" sx={{ mt: 0.5, py: 0.5, fontSize: '11px' }}>권고: Azure API Gateway 프록시 도입 검토.</Alert>
-            </Paper>
+            </DashCard>
           </Grid>
         </Grid>
         <SecHeader tag="RESPONSE" label="응답시간 — 비용 vs 속도" />
-        <Paper elevation={1} sx={{ p: 2.5 }}>
+        <DashCard sx={{ p: 2.5 }}>
           <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'text.primary', mb: 2 }}>응답시간 vs 비용 효율 — Haiku가 가장 빠르고 가장 저렴</Typography>
           <TableContainer>
             <Table size="small">
@@ -440,9 +480,79 @@ function TabQuality() {
               </TableBody>
             </Table>
           </TableContainer>
-        </Paper>
+        </DashCard>
       </Box>
     </Box>
+  )
+}
+
+// ── AppContent: ThemeProvider 안에서 dashboard 토큰 읽기 ──
+function AppContent({ themeKey, setThemeKey, tab, setTab }) {
+  const d = useDash()
+  return (
+    <>
+      <GlobalStyles styles={{
+        body: {
+          background: `${d.bodyBg} !important`,
+          backgroundAttachment: 'fixed !important',
+          transition: `background 0.5s cubic-bezier(0.4,0,0.2,1)`,
+          minHeight: '100vh',
+        }
+      }}/>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 3.5, px: { xs: 1.5, md: 5 }, pb: 10, transition: 'background-color 0.32s cubic-bezier(0.4,0,0.2,1)' }}>
+
+        {/* ── 테마 스위처 ── */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2.5, gap: 0.75 }}>
+          <Typography sx={{ fontSize: '10px', fontFamily: "'JetBrains Mono',monospace", color: 'text.disabled', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Design Token · Theme Switcher
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.75, maxWidth: '520px' }}>
+            {Object.entries(THEMES).map(([key, { label }]) => (
+              <Box
+                key={key}
+                onClick={() => setThemeKey(key)}
+                sx={{
+                  px: 1.75, py: 0.7,
+                  borderRadius: 2,
+                  fontSize: '11px',
+                  fontWeight: themeKey === key ? 700 : 500,
+                  cursor: 'pointer',
+                  bgcolor: themeKey === key ? 'primary.main' : 'background.paper',
+                  color: themeKey === key ? 'primary.contrastText' : 'text.primary',
+                  border: '1px solid',
+                  borderColor: themeKey === key ? 'primary.main' : 'divider',
+                  transition: d.transition,
+                  userSelect: 'none',
+                  boxShadow: themeKey === key ? 2 : 0,
+                }}
+              >
+                {label}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* ── 탭 네비게이션 ── */}
+        <Paper elevation={1} sx={{ borderRadius: 3, mb: 2, overflow: 'hidden', transition: d.transition }}>
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" indicatorColor="primary" textColor="primary">
+            <Tab label="개요" />
+            <Tab label="비용 분석" />
+            <Tab label="품질 모니터링" />
+          </Tabs>
+        </Paper>
+
+        {/* ── 대시보드 ── */}
+        <DashCard sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          {tab === 0 && <TabOverview />}
+          {tab === 1 && <TabCost />}
+          {tab === 2 && <TabQuality />}
+        </DashCard>
+
+        <Typography sx={{ textAlign: 'center', mt: 4, fontSize: '11px', color: 'text.disabled', fontFamily: "'JetBrains Mono',monospace" }}>
+          kt_cloud_monitoring.csv · AI Pipeline Kit · MUI Design Tokens · 2026-06-10
+        </Typography>
+      </Box>
+    </>
   )
 }
 
@@ -454,47 +564,7 @@ export default function App() {
   return (
     <ThemeProvider theme={THEMES[themeKey].theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 3.5, px: { xs: 2, md: 5 }, pb: 10 }}>
-
-        {/* ── 테마 스위처 ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2.5, gap: 0.5 }}>
-          <Typography sx={{ fontSize: '10px', fontFamily: "'JetBrains Mono',monospace", color: 'text.disabled', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.5 }}>
-            Design Token Theme Switcher
-          </Typography>
-          <Paper elevation={1} sx={{ display: 'inline-flex', borderRadius: 4, overflow: 'hidden' }}>
-            <ToggleButtonGroup value={themeKey} exclusive onChange={(_, v) => v && setThemeKey(v)} size="small">
-              {Object.entries(THEMES).map(([key, { label }]) => (
-                <ToggleButton key={key} value={key} sx={{ px: 3, py: 1.25 }}>
-                  {label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Paper>
-          <Typography sx={{ fontSize: '10px', color: 'text.disabled', mt: 0.5 }}>
-            themes.js 파일 하나로 전체 UI 테마 교체
-          </Typography>
-        </Box>
-
-        {/* ── 탭 네비게이션 ── */}
-        <Paper elevation={1} sx={{ borderRadius: 3, mb: 2, overflow: 'hidden' }}>
-          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" indicatorColor="primary" textColor="primary">
-            <Tab label="개요" />
-            <Tab label="비용 분석" />
-            <Tab label="품질 모니터링" />
-          </Tabs>
-        </Paper>
-
-        {/* ── 대시보드 ── */}
-        <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          {tab === 0 && <TabOverview />}
-          {tab === 1 && <TabCost />}
-          {tab === 2 && <TabQuality />}
-        </Paper>
-
-        <Typography sx={{ textAlign: 'center', mt: 4, fontSize: '11px', color: 'text.disabled', fontFamily: "'JetBrains Mono',monospace" }}>
-          kt_cloud_monitoring.csv · AI Pipeline Kit · MUI Design Tokens · 2026-06-10
-        </Typography>
-      </Box>
+      <AppContent themeKey={themeKey} setThemeKey={setThemeKey} tab={tab} setTab={setTab} />
     </ThemeProvider>
   )
 }

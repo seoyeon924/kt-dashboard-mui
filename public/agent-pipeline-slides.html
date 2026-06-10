@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>7개 AI 에이전트 파이프라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #111111;
+    --card: #1A1A1A;
+    --card2: #222222;
+    --border: rgba(255,255,255,0.08);
+    --text: #F2F2F2;
+    --muted: rgba(242,242,242,0.5);
+    --accent: #E8603C;
+    --green: #35c995;
+    --amber: #efb05d;
+    --red: #ef7d86;
+    --blue: #60a5fa;
+  }
+
+  html, body {
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+    font-family: 'Pretendard', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck {
+    width: 1280px;
+    height: 800px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    width: 1280px;
+    height: 800px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    padding: 64px 80px;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+  }
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-dot.active {
+    width: 20px;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+  .nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    z-index: 100;
+  }
+  .nav-arrow:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .nav-arrow.prev { left: 20px; }
+  .nav-arrow.next { right: 20px; }
+
+  /* ======================== SLIDE 1: COVER ======================== */
+  .s1 {
+    background: var(--bg);
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 120px;
+  }
+  .s1-kicker {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 28px;
+  }
+  .s1-title {
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .s1-title span { color: var(--accent); }
+  .s1-sub {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-bottom: 60px;
+    line-height: 1.5;
+  }
+  .s1-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .s1-step {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .s1-node {
+    width: 100px; height: 40px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .s1-node.highlight {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,96,60,0.08);
+  }
+  .s1-arrow {
+    width: 24px; height: 1px;
+    background: var(--border);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .s1-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -3px;
+    width: 7px; height: 7px;
+    border-right: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+  .s1-badge {
+    position: absolute;
+    bottom: 64px; right: 120px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  /* ======================== SLIDE 2: OVERVIEW ======================== */
+  .s2-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 44px;
+  }
+  .slide-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .slide-title {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .s2-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+  .s2-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+  }
+  .s2-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  .s2-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .s2-role {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .s2-output {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: monospace;
+    letter-spacing: 0.02em;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .s2-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding-top: 60px;
+  }
+  .s2-arrow-right {
+    font-size: 20px;
+    color: var(--border);
+  }
+  .s2-bottom {
+    margin-top: auto;
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 32px;
+  }
+  .s2-stat { display: flex; gap: 8px; align-items: center; }
+  .s2-stat-v { color: var(--text); font-weight: 600; }
+
+  /* ======================== AGENT SLIDES (3-9) ======================== */
+  .agent-slide {
+    padding: 56px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 60px;
+    align-content: center;
+  }
+  .agent-left {}
+  .agent-step-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .agent-step-num {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .agent-name {
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.0;
+    margin-bottom: 16px;
+  }
+  .agent-name .at { color: var(--accent); }
+  .agent-tagline {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+  .agent-model {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: monospace;
+  }
+  .agent-model-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .agent-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .io-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+  .io-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .io-label-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .io-label-dot.input { background: var(--amber); }
+  .io-label-dot.output { background: var(--green); }
+  .io-label-dot.principle { background: var(--blue); }
+  .io-content {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .io-content ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .io-content ul li::before {
+    content: '—';
+    color: var(--muted);
+    margin-right: 8px;
+    font-size: 12px;
+  }
+  .io-content .tag {
+    display: inline-block;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--green);
+    margin-right: 4px;
+  }
+  .principle-quote {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.6;
+    font-style: italic;
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+  }
+  .severity-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .sev {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .sev.high { background: rgba(239,125,134,0.15); color: var(--red); }
+  .sev.mid { background: rgba(239,176,93,0.15); color: var(--amber); }
+  .sev.low { background: rgba(53,201,149,0.15); color: var(--green); }
+
+  /* ======================== SLIDE 10: WRAP ======================== */
+  .s10 {
+    padding: 56px 80px;
+    justify-content: center;
+  }
+  .s10-header {
+    margin-bottom: 40px;
+  }
+  .s10-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .s10-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .s10-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .s10-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .s10-card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .s10-highlight {
+    background: rgba(232,96,60,0.08);
+    border: 1px solid rgba(232,96,60,0.2);
+    border-radius: 8px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .s10-hl-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+  .s10-hl-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* SVG Pipeline */
+  .pipeline-svg-wrap {
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- ===== SLIDE 1: COVER ===== -->
+  <div class="slide s1 active">
+    <div class="s1-kicker">AI Pipeline Kit · KT IT기술부문</div>
+    <div class="s1-title">7개 AI 에이전트<br><span>파이프라인</span></div>
+    <div class="s1-sub">CSV 파일 하나에서<br>임원 보고서까지 — 자동으로</div>
+    <div class="s1-pipeline">
+      <div class="s1-step"><div class="s1-node">data-ingestion</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node">eda</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node">problem</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node highlight">metrics</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node">analysis</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node">dashboard</div></div>
+      <div class="s1-arrow"></div>
+      <div class="s1-step"><div class="s1-node">report</div></div>
+    </div>
+    <div class="s1-badge">
+      각 에이전트는 이전 단계의 산출물을 읽고<br>
+      자기 결과물을 파일로 저장한 뒤 다음 에이전트에 넘깁니다
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 2: OVERVIEW ===== -->
+  <div class="slide">
+    <div class="s2-header">
+      <div>
+        <div class="slide-label">파이프라인 전체 구조</div>
+        <div class="slide-title">7단계, 배턴을 넘기는<br>AI 분석 팀</div>
+      </div>
+    </div>
+    <div class="s2-grid">
+      <div class="s2-card">
+        <div class="s2-num">STEP 1</div>
+        <div class="s2-name">data-<br>ingestion</div>
+        <div class="s2-role">데이터 구조 파악 + 품질 진단</div>
+        <div class="s2-output">01_dataset_profile.md</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 2</div>
+        <div class="s2-name">eda</div>
+        <div class="s2-role">패턴 탐색 + 분석 방법론 제안</div>
+        <div class="s2-output">02_eda_report.md</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 3</div>
+        <div class="s2-name">problem</div>
+        <div class="s2-role">비즈니스 문제 정의 (MECE)</div>
+        <div class="s2-output">03_problem_definition.md</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 4</div>
+        <div class="s2-name">metrics</div>
+        <div class="s2-role">KPI 정의 + 파생 지표 설계</div>
+        <div class="s2-output">04_kpi_summary.md</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 5</div>
+        <div class="s2-name">analysis</div>
+        <div class="s2-role">General→Specific 인사이트 도출</div>
+        <div class="s2-output">05_analysis_report.md</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 6</div>
+        <div class="s2-name">dashboard</div>
+        <div class="s2-role">인터랙티브 HTML 대시보드 제작</div>
+        <div class="s2-output">06_dashboard.html</div>
+      </div>
+      <div class="s2-card">
+        <div class="s2-num">STEP 7</div>
+        <div class="s2-name">report</div>
+        <div class="s2-role">임원용 Executive Summary</div>
+        <div class="s2-output">07_executive_report.md</div>
+      </div>
+    </div>
+    <div class="s2-bottom">
+      <div class="s2-stat">병렬 실행 금지 — 이전 단계 파일이 생성된 후 시작</div>
+      <div class="s2-stat"><span class="s2-stat-v">입력:</span> CSV / Excel / JSON / TSV / PDF</div>
+      <div class="s2-stat"><span class="s2-stat-v">산출물:</span> 마크다운 보고서 7개 + HTML 대시보드</div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 3: data-ingestion ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">1</div>
+        STEP ONE
+      </div>
+      <div class="agent-name"><span class="at">@</span>data-ingestion</div>
+      <div class="agent-tagline">
+        "이 데이터로 무엇을 할 수 있는가"를<br>
+        팀 전체가 같은 이해로 시작하게 만듭니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">runs/latest/input/</span> 의 데이터 파일</li>
+            <li>CSV · TSV · Excel · JSON · PDF 형식 자동 감지</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>컬럼별 타입 · 고유값 수 · 결측치 비율 표</li>
+            <li>이상치 · 중복 · 형식 이슈 심각도 진단
+              <div class="severity-row">
+                <span class="sev high">높음 20%+</span>
+                <span class="sev mid">중간 5~20%</span>
+                <span class="sev low">낮음 ~5%</span>
+              </div>
+            </li>
+            <li>다음 에이전트(@eda)에게 전달할 주의사항</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            분석하지 않는다 — 구조와 품질 파악이 전부다.<br>
+            문제를 축소하지 않고 있는 그대로 보고한다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 4: eda ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">2</div>
+        STEP TWO
+      </div>
+      <div class="agent-name"><span class="at">@</span>eda</div>
+      <div class="agent-tagline">
+        숫자를 나열하는 것이 아니라<br>
+        "왜 중요한가"로 연결되는 패턴을 찾습니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">01_dataset_profile.md</span> (이전 단계 산출물)</li>
+            <li>원본 CSV 직접 읽기</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>일변량 분석 — 각 컬럼의 분포·평균·이상값</li>
+            <li>다변량 분석 — 컬럼 간 상관관계·그룹 비교</li>
+            <li>적합한 분석 방법론 후보 테이블</li>
+            <li>핵심 발견 3가지 (수치 근거 포함)</li>
+            <li>이 데이터로 답할 수 있는 분석 질문 3~5개</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            도메인 고정 가정 금지 — 커머스 방법론을 금융·통신 데이터에 강제하지 않는다.
+            방법론은 데이터가 보여주는 것을 따른다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 5: problem ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">3</div>
+        STEP THREE
+      </div>
+      <div class="agent-name"><span class="at">@</span>problem</div>
+      <div class="agent-tagline">
+        EDA가 발견한 패턴을<br>
+        "해결해야 할 비즈니스 문제"로 바꿉니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">02_eda_report.md</span> (이전 단계 산출물)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>측정 가능한 비즈니스 문제 정의 2~3개</li>
+            <li>메인 문제의 MECE 원인 계층 구조<br>
+              <small style="color:var(--muted); font-size:12px;">문제 → 예상 원인 → 원인의 원인 → 해결방안 → 목표 지표</small>
+            </li>
+            <li>핵심 분석 질문 Top 3 (검증 방법 + 의사결정 연결)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            "무엇이 일어났는가"가 아니라 "왜 일어났는가"를 묻는다.<br>
+            질문은 반드시 의사결정으로 이어져야 한다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 6: metrics ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">4</div>
+        STEP FOUR
+      </div>
+      <div class="agent-name"><span class="at">@</span>metrics</div>
+      <div class="agent-tagline">
+        "매출"이 아니라<br>
+        "세금 제외 순매출(월 합계, 전월 대비)"처럼<br>
+        모호함을 없앱니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">03_problem_definition.md</span></li>
+            <li>원본 CSV 컬럼 확인</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>KPI 목록 — 결과 지표 · 선행 지표 · 진단 지표 · 파생 지표</li>
+            <li>각 KPI의 계산식 + 단위 + 현재값 + 비교 기준</li>
+            <li>액션 가이드: 지표가 X% 나빠지면 → 할 것</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            선행 지표를 반드시 1개 이상 포함한다 — 결과 지표만 있으면 너무 늦게 안다.
+            절대값과 상대값은 절대 혼용하지 않는다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 7: analysis ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">5</div>
+        STEP FIVE
+      </div>
+      <div class="agent-name"><span class="at">@</span>analysis</div>
+      <div class="agent-tagline">
+        숫자를 읽는 것이 아니라<br>
+        변화의 의미를 해석합니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">03_problem_definition.md</span> + <span class="tag">04_kpi_summary.md</span></li>
+            <li>원본 CSV (필요 시 직접 접근)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output) · General → Specific 흐름</div>
+        <div class="io-content">
+          <ul>
+            <li><strong>전체 현황</strong> → <strong>주요 분해</strong> → <strong>원인 탐색</strong> → <strong>이상 발견</strong> → <strong>기회 발견</strong></li>
+            <li>핵심 인사이트 3개 (발견 · 근거 · 임팩트 · 한계)</li>
+            <li>우선순위별 추천 액션 — P1 즉시 / P2 2~4주 / P3 모니터링</li>
+            <li>대시보드용 한 줄 메시지</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            추측은 추측이라고 밝힌다 — "~로 보인다"와 "~이다"를 구분한다.<br>
+            인사이트는 행동으로 이어져야 한다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 8: dashboard ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">6</div>
+        STEP SIX
+      </div>
+      <div class="agent-name"><span class="at">@</span>dashboard</div>
+      <div class="agent-tagline">
+        "예쁜 시각화"가 아니라<br>
+        "3초 안에 핵심이 읽히는<br>대시보드"를 만듭니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-sonnet-4-6
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li><span class="tag">dashboard-sample.html</span> 베이스 템플릿</li>
+            <li><span class="tag">05_analysis_report.md</span> + <span class="tag">04_kpi_summary.md</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>KPI 카드 · 추세 차트 · 비교 차트 · 스토리 블록</li>
+            <li>탭 구조 (임원용 Overview + 실무자용 세부 탭)</li>
+            <li>시나리오 시뮬레이터 슬라이더 위젯</li>
+            <li>순수 SVG/Canvas — CDN 라이브러리 없음</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            차트 제목은 질문형 또는 결론형 —<br>"매출 현황"이 아니라 "왜 마진이 4배 낮은가?"<br>
+            데이터가 다르면 대시보드 구조도 달라진다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 9: report ===== -->
+  <div class="slide agent-slide">
+    <div class="agent-left">
+      <div class="agent-step-tag">
+        <div class="agent-step-num">7</div>
+        STEP SEVEN
+      </div>
+      <div class="agent-name"><span class="at">@</span>report</div>
+      <div class="agent-tagline">
+        분석 팀의 모든 작업을<br>
+        임원이 5분 안에 읽을 수 있는<br>
+        보고서로 압축합니다
+      </div>
+      <div class="agent-model">
+        <div class="agent-model-dot"></div>
+        claude-haiku-4-5
+      </div>
+    </div>
+    <div class="agent-right">
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot input"></div>읽는 것 (Input)</div>
+        <div class="io-content">
+          <ul>
+            <li>파이프라인 전체 산출물 5개 파일</li>
+            <li>대시보드 품질 검토 (임원 · 실무자 · 데이터 신뢰성 3관점)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot output"></div>만드는 것 (Output)</div>
+        <div class="io-content">
+          <ul>
+            <li>Executive Summary — 한 줄 요약 + 핵심 KPI 현황</li>
+            <li>주요 발견 3개 (수치 + 임팩트)</li>
+            <li>액션 플랜 테이블 — P1 즉시 / P2 단기 / P3 모니터링</li>
+            <li>대시보드 품질 검토 체크리스트</li>
+          </ul>
+        </div>
+      </div>
+      <div class="io-card">
+        <div class="io-label"><div class="io-label-dot principle"></div>핵심 원칙</div>
+        <div class="io-content">
+          <div class="principle-quote">
+            "무엇을 발견했는가"보다 "무엇을 해야 하는가"가 중심.
+            임원은 맥락을 모른다 — 자기완결적으로 쓴다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 10: WRAP-UP ===== -->
+  <div class="slide s10">
+    <div class="s10-header">
+      <div class="slide-label">정리</div>
+      <div class="slide-title">7개 에이전트가 지키는<br>공통 원칙</div>
+    </div>
+    <div class="s10-grid">
+      <div class="s10-card">
+        <div>
+          <div class="s10-card-title">KPI 정의가 먼저</div>
+          <div class="s10-card-desc">이름 · 계산 기준 · 단위를 확정한 뒤 분석 시작. 정의 없이 숫자를 내지 않는다.</div>
+        </div>
+      </div>
+      <div class="s10-card">
+        <div>
+          <div class="s10-card-title">절대값 / 상대값 혼용 금지</div>
+          <div class="s10-card-desc">"+100건"과 "+5%"는 의미가 다르다. 비교 기준 없는 숫자는 내지 않는다.</div>
+        </div>
+      </div>
+      <div class="s10-card">
+        <div>
+          <div class="s10-card-title">차트는 질문에 답한다</div>
+          <div class="s10-card-desc">예쁨보다 명확함 우선. 카드 제목은 결론형 또는 질문형으로만.</div>
+        </div>
+      </div>
+      <div class="s10-card">
+        <div>
+          <div class="s10-card-title">도메인 독립성</div>
+          <div class="s10-card-desc">커머스용 가정을 KT 통신 데이터에 강제하지 않는다. 데이터가 보여주는 것만.</div>
+        </div>
+      </div>
+    </div>
+    <div class="s10-highlight">
+      <div>
+        <div class="s10-hl-text">CSV 파일 하나 → 7개 산출물</div>
+        <div class="s10-hl-sub">데이터 프로파일 · EDA 보고서 · 문제 정의 · KPI 정의 · 분석 보고서 · 대시보드 · 임원 보고서</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation arrows -->
+<button class="nav-arrow prev" onclick="go(-1)">&#8249;</button>
+<button class="nav-arrow next" onclick="go(1)">&#8250;</button>
+
+<!-- Dots -->
+<div class="nav" id="nav"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const nav = document.getElementById('nav');
+  let cur = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => go(i - cur);
+    nav.appendChild(d);
+  });
+
+  function go(delta) {
+    const next = Math.max(0, Math.min(slides.length - 1, cur + delta));
+    if (next === cur) return;
+    slides[cur].classList.remove('active');
+    document.querySelectorAll('.nav-dot')[cur].classList.remove('active');
+    cur = next;
+    slides[cur].classList.add('active');
+    document.querySelectorAll('.nav-dot')[cur].classList.add('active');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(-1);
+  });
+</script>
+</body>
+</html>

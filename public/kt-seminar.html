@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>클로드코드 7개 에이전트로 만드는 AI 대시보드 — KT 세미나 2026</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #F7F5F2; --text: #1C1A18; --sub: #3E3A36; --dim: #6A6460;
+    --accent: #888888; --green: #4A8A72; --white: #1C1A18; --border: #DDD8D0;
+  }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Pretendard', -apple-system, sans-serif; width: 100vw; height: 100vh; overflow: hidden; }
+  .deck { width: 1280px; height: 800px; transform-origin: top left; position: fixed; top: 0; left: 0; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .slide.active { display: flex; }
+  .tb { height: 48px; min-height: 48px; padding: 0 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .tb-cap { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
+  .tb-num { font-size: 12px; color: var(--dim); letter-spacing: 0.08em; }
+  .body { flex: 1; display: flex; min-height: 0; }
+  .nav { position: fixed; bottom: 24px; right: 40px; display: flex; align-items: center; gap: 12px; z-index: 100; }
+  .nav-ctr { font-size: 11px; color: var(--dim); letter-spacing: 0.08em; }
+  .nav-btn { background: none; border: none; color: var(--sub); cursor: pointer; font-size: 18px; padding: 4px; transition: color 0.15s; }
+  .nav-btn:hover { color: var(--white); }
+  .progress { position: fixed; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s; z-index: 100; }
+  .l-panel { width: 38%; border-right: 1px solid var(--border); padding: 52px 52px; display: flex; flex-direction: column; justify-content: space-between; }
+  .l-panel-wide { width: 42%; border-right: 1px solid var(--border); padding: 52px 52px; display: flex; flex-direction: column; justify-content: space-between; }
+  .r-panel { flex: 1; overflow: hidden; }
+
+  /* ── Cover slide dark override ── */
+  #s1 { --white: #FFFFFF; --text: #F2F2F2; --sub: #888888; --border: #3A3A3A; --dim: #555555; }
+  #s1 .s1-sub { color: rgba(255,255,255,0.6) !important; }
+  #s1 .body { background: #050606 !important; }
+  .r-panel-dark { flex: 1; overflow: hidden; background: #EDECEA; display: flex; align-items: center; justify-content: center; }
+  .eyebrow { font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--sub); margin-bottom: 20px; }
+  .slide-num { font-size: 12px; color: var(--dim); }
+  .big-title { font-size: clamp(32px, 4vw, 54px); font-weight: 300; color: var(--white); line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .serif-sub { font-family: 'Pretendard', sans-serif; font-style: normal; font-weight: 300; font-size: 20px; color: #444440; line-height: 1.5; margin-bottom: 16px; }
+  .body-text { font-size: 15px; color: #555550; line-height: 1.9; }
+  .row-item { display: flex; align-items: flex-start; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .row-item:first-child { border-top: 1px solid var(--border); }
+  .row-label { font-size: 12px; color: rgba(28,26,24,0.74); letter-spacing: 0.06em; width: 110px; flex-shrink: 0; padding-top: 4px; text-transform: uppercase; }
+  .row-title { font-size: 15px; font-weight: 600; color: var(--white); line-height: 1.3; margin-bottom: 3px; }
+  .row-sub { font-size: 15px; color: #555550; line-height: 1.5; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); padding: 4px 10px; border: 1px solid #DDD8D0; }
+  .s1-title { font-size: clamp(40px, 5.2vw, 72px); font-weight: 300; color: var(--white); line-height: 1.2; letter-spacing: -0.03em; }
+  .s1-sub { font-size: clamp(28px, 3.4vw, 44px); font-weight: 300; color: rgba(255,255,255,0.6); margin-top: 8px; line-height: 1.4; }
+  .s2-name { font-size: clamp(28px, 3.8vw, 48px); font-weight: 300; color: var(--white); line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 14px; }
+  .s2-badge { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+  .s2-links { font-size: 13px; color: var(--dim); line-height: 2.4; }
+  .sec-label { font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(28,26,24,0.62); margin-bottom: 28px; font-family: 'Pretendard', sans-serif; }
+  .sec-title { font-size: clamp(18px, 2.4vw, 28px); font-weight: 300; line-height: 1.55; color: #1C1A18; }
+  .sec-sub { font-size: 13px; color: rgba(28,26,24,0.58); margin-top: 24px; line-height: 1.9; letter-spacing: 0.02em; font-weight: 300; }
+  .agenda-rows { flex: 1; display: flex; flex-direction: column; }
+  .agenda-row { flex: 1; display: flex; align-items: center; border-bottom: 1px solid var(--border); gap: 0; padding: 0 52px; }
+  .agenda-row:first-child { border-top: 1px solid var(--border); }
+  .agenda-part { width: 72px; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); flex-shrink: 0; }
+  .agenda-title { flex: 1; font-size: 20px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agenda-sub { font-size: 14px; color: rgba(28,26,24,0.60); margin-left: 16px; flex-shrink: 0; max-width: 260px; text-align: right; line-height: 1.5; }
+  .agenda-min { font-size: 14px; color: rgba(28,26,24,0.55); margin-left: 16px; flex-shrink: 0; width: 40px; text-align: right; }
+  .cmp-half { flex: 1; padding: 52px 48px; display: flex; flex-direction: column; justify-content: space-between; }
+  .cmp-half + .cmp-half { border-left: 1px solid var(--border); }
+  .cmp-label { font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--sub); margin-bottom: 20px; }
+  .cmp-title { font-size: clamp(28px, 3.2vw, 44px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 28px; }
+  .cmp-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .cmp-list li { font-size: 15px; color: var(--sub); padding-left: 20px; position: relative; line-height: 1.65; }
+  .cmp-list li::before { content: "—"; position: absolute; left: 0; color: var(--dim); }
+  .cmp-list li.hi { color: var(--text); }
+  .cmp-list li.hi::before { content: "→"; color: var(--accent); }
+  .cmp-list li strong { color: var(--white); }
+  .ba-before { background: rgba(239,125,134,0.06); }
+  .ba-after { background: rgba(138,191,168,0.08); border-left: 1px solid var(--border); }
+  .code-wrap { background: #EDECEA; border: 1px solid var(--border); padding: 28px 32px; font-family: 'Menlo', 'Monaco', monospace; font-size: 13px; line-height: 1.8; color: rgba(28,26,24,0.72); overflow: hidden; }
+  .code-line-green { color: #8ABFA8; }
+  .code-line-hi { color: #666660; }
+  .pipe-wrap { display: flex; flex-direction: column; gap: 0; }
+  .pipe-row { display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); padding: 18px 52px; }
+  .pipe-row:first-child { border-top: 1px solid var(--border); }
+  .pipe-n { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; width: 28px; flex-shrink: 0; }
+  .pipe-name { font-size: 15px; font-weight: 600; color: var(--white); width: 160px; flex-shrink: 0; }
+  .pipe-arrow { font-size: 12px; color: var(--dim); margin-right: 20px; }
+  .pipe-desc { font-size: 15px; color: #555550; flex: 1; }
+  .pipe-out { font-size: 11px; color: var(--sub); letter-spacing: 0.05em; width: 240px; text-align: right; flex-shrink: 0; }
+  .vid-left { width: 36%; border-right: 1px solid var(--border); padding: 52px 52px; display: flex; flex-direction: column; justify-content: space-between; }
+  .vid-part { font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--sub); margin-bottom: 24px; }
+  .vid-title { font-size: clamp(20px, 2.4vw, 34px); font-weight: 300; color: var(--white); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .vid-sub-serif { font-size: 20px; font-weight: 300; color: #444440; line-height: 1.4; margin-bottom: 18px; }
+  .vid-desc { font-size: 15px; color: #555550; line-height: 1.85; }
+  .vid-steps { margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+  .vid-step { display: flex; gap: 14px; align-items: flex-start; font-size: 14px; color: #555550; line-height: 1.5; }
+  .vid-step-n { color: var(--sub); font-size: 11px; letter-spacing: 0.06em; flex-shrink: 0; padding-top: 2px; }
+  .vid-num { font-size: 12px; color: var(--dim); }
+  .vid-right { flex: 1; overflow: hidden; background: #E8E5E2; display: flex; align-items: center; justify-content: center; }
+  .vid-right video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .dash-left { width: 36%; border-right: 1px solid var(--border); padding: 52px 52px; display: flex; flex-direction: column; justify-content: space-between; }
+  .dash-part { font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--sub); margin-bottom: 24px; }
+  .dash-title { font-size: clamp(20px, 2.4vw, 34px); font-weight: 300; color: var(--white); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .dash-sub-serif { font-size: 20px; font-weight: 300; color: #444440; line-height: 1.4; margin-bottom: 18px; }
+  .dash-desc { font-size: 15px; color: #555550; line-height: 1.85; }
+  .dash-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .dash-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); padding: 4px 10px; border: 1px solid #DDD8D0; }
+  .dash-num { font-size: 12px; color: var(--dim); }
+  .dash-right { flex: 1; overflow: hidden; }
+  .dash-right img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #EDECEA; }
+  .img-full { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #EDECEA; }
+  .takeaway-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--border); }
+  .takeaway-cell { padding: 52px 48px; display: flex; flex-direction: column; justify-content: space-between; }
+  .takeaway-cell + .takeaway-cell { border-left: 1px solid var(--border); }
+  .takeaway-n { font-size: clamp(60px, 8vw, 96px); font-weight: 800; color: var(--white); letter-spacing: -0.04em; line-height: 1; }
+  .takeaway-title { font-size: 21px; font-weight: 600; color: var(--white); margin-bottom: 12px; letter-spacing: -0.01em; }
+  .takeaway-body { font-size: 15px; color: var(--sub); line-height: 1.8; }
+  .ag-io-tag { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-family:monospace; background:rgba(138,191,168,0.18); color:#3A6A58; border:1px solid rgba(138,191,168,0.35); }
+  .ag-resp-item::before { content:"·"; margin-right:6px; color:#bbb; }
+  .ag-check::before { content:"✓"; margin-right:6px; color:#8ABFA8; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ════ 01 TITLE ════ -->
+<div class="slide active" id="s1">
+  <div class="body" style="position:relative; flex-direction:column; justify-content:space-between; padding:56px 72px; background:#050606; overflow:hidden;">
+    <video autoplay loop muted playsinline style="position:absolute;right:0;top:0;width:55%;height:100%;object-fit:cover;opacity:0.85;z-index:0;">
+      <source src="assets/title-bg.mp4" type="video/mp4">
+    </video>
+    <div style="position:absolute;inset:0;background:linear-gradient(to right, rgba(5,6,6,0.92) 40%, rgba(5,6,6,0.0) 100%);z-index:1;"></div>
+    <div style="position:relative; z-index:2;">
+      <div style="font-size:16px; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:28px; font-weight:500;">KT IT기술부문 세미나 · 2026.06.11</div>
+      <div class="s1-title">클로드코드 7개 에이전트로<br>만드는 <span style="font-family:'Instrument Serif',serif; font-style:italic;">AI</span> 대시보드</div>
+      <div class="s1-sub" style="font-size:clamp(20px,2.4vw,28px); color:rgba(255,255,255,0.6); margin-top:12px;">+ 실무 사례 소개</div>
+    </div>
+    <div style="position:relative; z-index:2; display:flex; flex-direction:row; align-items:flex-end; justify-content:space-between;">
+      <div style="display:flex; flex-direction:column; gap:0;">
+        <div style="font-size:18px; font-weight:300; color:rgba(255,255,255,0.45); line-height:1.5; margin-bottom:6px;">데이터 시각화 전문가 전서연에게 배우는</div>
+        <div style="font-size:24px; font-weight:600; color:#fff; line-height:1.3; letter-spacing:-0.02em;">AI 인터랙티브 대시보드 제작 전과정</div>
+      </div>
+      <div style="text-align:right; flex-shrink:0; margin-left:32px;">
+        <div style="font-size:18px; font-weight:300; color:rgba(255,255,255,0.45); line-height:1.5; margin-bottom:6px;">DataBridge CEO</div>
+        <div style="font-size:24px; font-weight:600; color:#fff; letter-spacing:-0.01em;">전서연</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 02 SPEAKER ════ -->
+<div class="slide" id="s2">
+  <div class="tb"><span class="tb-cap">연사 소개</span><span class="tb-num">02</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="s2-badge">DataBridge</div>
+        <div class="s2-name">전서연</div>
+        <div style="margin-bottom:20px;">
+          <div style="font-size:18px; color:rgba(28,26,24,0.85); line-height:1.8; font-weight:500;">국내 최초 Tableau Visionary 2026</div>
+          <div style="font-size:16px; color:rgba(28,26,24,0.74); margin-top:5px; line-height:1.6;">전세계 41명 선정 · 글로벌 데이터 시각화 전문가</div>
+        </div>
+        <div>
+          <div style="font-size:18px; color:rgba(28,26,24,0.85); line-height:1.8; font-weight:500;">국내 최초 5년 연속 Tableau Ambassador</div>
+        </div>
+      </div>
+      <div class="s2-links">databridge.co.kr</div>
+    </div>
+    <div style="flex:1; padding:28px 44px; display:flex; flex-direction:column; justify-content:center; gap:0; overflow:auto;">
+      <div style="font-size:16px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(28,26,24,0.58); padding-bottom:10px;">현재</div>
+      <div class="row-item">
+        <div class="row-label" style="color:rgba(28,26,24,0.7); font-weight:600;">DataBridge</div>
+        <div>
+          <div class="row-title">CEO / Founder</div>
+          <div class="row-sub" style="margin-top:6px; line-height:1.9;">데이터 스토리텔링 기반 AX / DX 교육 및 컨설팅<br>현대자동차 전사 BI 부트캠프<br>쿠팡 Business Analytics 대시보드 구축<br>하나은행 전사 디지털 데이터 분석 스쿨<br>CJ그룹 전사 태블로 교육</div>
+        </div>
+      </div>
+      <div class="row-item">
+        <div class="row-label" style="color:rgba(28,26,24,0.7); font-weight:600;">FastCampus</div>
+        <div>
+          <div class="row-title">패스트캠퍼스 온라인 강의</div>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:baseline; gap:14px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.62); letter-spacing:0.06em; min-width:32px;">2021</span><span class="row-sub">세계 3등에게 배우는 실무 밀착 데이터 시각화</span></div>
+            <div style="display:flex; align-items:baseline; gap:14px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.62); letter-spacing:0.06em; min-width:32px;">2024</span><span class="row-sub">세계 3등에게 배우는 13개 데이터 분석 프로젝트</span></div>
+            <div style="display:flex; align-items:baseline; gap:14px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.06em; min-width:32px;">2026</span><span class="row-sub" style="color:#1C1A18;">AI + 데이터 시각화 (w. Claude Code)</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:16px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(28,26,24,0.58); padding-top:18px; padding-bottom:10px;">이전</div>
+      <div class="row-item"><div class="row-label" style="color:rgba(28,26,24,0.55);">AWS</div><div><div class="row-title">Business Analyst</div></div></div>
+      <div class="row-item" style="border-bottom:none;"><div class="row-label" style="color:rgba(28,26,24,0.55);">Martinee</div><div><div class="row-title">Growth Data Analyst</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 03 AGENDA ════ -->
+<div class="slide" id="s3">
+  <div class="tb"><span class="tb-cap">KT IT기술부문 세미나 · 2026.06.11 · 3H</span><span class="tb-num">03</span></div>
+  <div class="body">
+    <div class="l-panel" style="width:28%;">
+      <div>
+        <div class="s2-badge">KT · 2026</div>
+        <div class="s2-name">목차</div>
+      </div>
+      <div style="font-size:16px; color:var(--dim);">총 180분</div>
+    </div>
+    <div class="agenda-rows">
+      <div class="agenda-row"><div class="agenda-part">Intro</div><div class="agenda-title">오프닝 &amp; 사전 설문 결과 공유</div><div class="agenda-sub">세미나 목표 · 오늘의 결과물 미리보기 · 참가자 니즈 확인</div><div class="agenda-min">10분</div></div>
+      <div class="agenda-row"><div class="agenda-part">Part 1</div><div class="agenda-title">왜 AI 대시보드인가 — 실무 프로젝트 경험 이야기</div><div class="agenda-sub">BI 툴 vs AI · 사례 갤러리 · 비즈니스 구축 사례 · KT 적용 상상</div><div class="agenda-min">60분</div></div>
+      <div class="agenda-row" style="background:rgba(28,26,24,0.02);"><div class="agenda-part" style="color:var(--dim);">Break</div><div class="agenda-title" style="color:var(--dim); font-weight:300;">휴식</div><div class="agenda-sub"></div><div class="agenda-min" style="color:var(--dim);">15분</div></div>
+      <div class="agenda-row"><div class="agenda-part">Part 2+3</div><div class="agenda-title">실제로 어떻게 만드나 — 구조 이해 + 라이브 데모</div><div class="agenda-sub">7에이전트 사상 · 시행착오 · 산업군별 데모 · KT 적용사례</div><div class="agenda-min">80분</div></div>
+      <div class="agenda-row"><div class="agenda-part">Q&amp;A</div><div class="agenda-title">KT 적용 포인트 &amp; 질의응답</div><div class="agenda-sub">사전 질문 해소 · 자기학습 가이드</div><div class="agenda-min">15분</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 사전 설문 결과 ════ -->
+<div class="slide" id="s-survey">
+  <div class="tb"><span class="tb-cap">Intro — 사전 설문 결과 (120명)</span><span class="tb-num">04</span></div>
+  <div class="body" style="padding:0;">
+    <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:0;">
+      <!-- Q1 -->
+      <div style="padding:36px 40px; border-right:1px solid var(--border); border-bottom:1px solid var(--border);">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:14px;">Q1 · 참석 동기</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#8ABFA8; border-radius:2px; width:36.7%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">AI 활용 트렌드 파악</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">44명 · 36.7%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#8ABFA8; border-radius:2px; width:33.3%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">AI로 대시보드 제작방법</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">40명 · 33.3%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#8dc8b4; border-radius:2px; width:27.5%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">업무 적용 인사이트</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">33명 · 27.5%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#3A3A3A; border-radius:2px; width:2.5%;"></div><span style="font-size:16px; color:rgba(28,26,24,0.70); white-space:nowrap;">타사 실무 사례</span><span style="font-size:18px; color:rgba(28,26,24,0.58); margin-left:auto;">3명 · 2.5%</span></div>
+        </div>
+        <div style="margin-top:12px; font-size:18px; color:#8ABFA8; padding:8px 10px; background:rgba(138,191,168,0.08); border-radius:6px;">→ 트렌드 체감 + 제작방법 = 70% 이상. 오늘 세미나 방향 그대로.</div>
+      </div>
+      <!-- Q2 -->
+      <div style="padding:36px 40px; border-bottom:1px solid var(--border);">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:14px;">Q2 · 현재 사용 도구 (중복)</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#efb05d; border-radius:2px; width:58.3%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">Excel</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">70명 · 58.3%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#efb05d; border-radius:2px; width:22.5%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">Tableau · PowerBI</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">27명 · 22.5%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#efb05d; border-radius:2px; width:21.7%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">Python · R</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">26명 · 21.7%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#3A3A3A; border-radius:2px; width:10%;"></div><span style="font-size:16px; color:rgba(28,26,24,0.70); white-space:nowrap;">사내 BI 시스템</span><span style="font-size:18px; color:rgba(28,26,24,0.58); margin-left:auto;">12명 · 10%</span></div>
+        </div>
+        <div style="margin-top:12px; font-size:18px; color:#efb05d; padding:8px 10px; background:rgba(239,176,93,0.06); border-radius:6px;">→ Excel 위주 → BI 툴 vs AI 비교가 체감 포인트 될 것</div>
+      </div>
+      <!-- Q3 -->
+      <div style="padding:36px 40px; border-right:1px solid var(--border);">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:14px;">Q3 · Claude Code 경험</div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#8ABFA8; border-radius:2px; width:31%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">업무에 정기적으로 활용 중</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">35명 · 31%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#8dc8b4; border-radius:2px; width:47.5%;"></div><span style="font-size:16px; color:#1C1A18; white-space:nowrap;">한두 번 써봤다</span><span style="font-size:18px; color:rgba(28,26,24,0.70); margin-left:auto;">57명 · 47.5%</span></div>
+          <div style="display:flex; gap:10px; align-items:center;"><div style="height:4px; background:#3A3A3A; border-radius:2px; width:23.3%;"></div><span style="font-size:16px; color:rgba(28,26,24,0.70); white-space:nowrap;">전혀 없음</span><span style="font-size:18px; color:rgba(28,26,24,0.58); margin-left:auto;">28명 · 23.3%</span></div>
+        </div>
+        <div style="font-size:18px; color:#8ABFA8; padding:8px 10px; background:rgba(138,191,168,0.08); border-radius:6px;">→ 써본 사람 78%. 기초 설명보다 실전 노하우/구조 집중 OK</div>
+      </div>
+      <!-- 사전질문 요약 -->
+      <div style="padding:36px 40px;">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:14px;">사전 질문 — 주요 카테고리</div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <div style="display:flex; gap:10px; align-items:flex-start;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; flex-shrink:0; width:70px; padding-top:2px;">AI도구</span><span style="font-size:16px; color:rgba(28,26,24,0.65); line-height:1.5;">Claude Code vs 다른 AI · BI툴 차이점</span></div>
+          <div style="display:flex; gap:10px; align-items:flex-start;"><span style="font-size:16px; color:#efb05d; font-weight:700; flex-shrink:0; width:70px; padding-top:2px;">대시보드</span><span style="font-size:16px; color:rgba(28,26,24,0.65); line-height:1.5;">구성 필수 체크사항 · 데이터 특성별 표현</span></div>
+          <div style="display:flex; gap:10px; align-items:flex-start;"><span style="font-size:16px; color:#8dc8b4; font-weight:700; flex-shrink:0; width:70px; padding-top:2px;">현장적용</span><span style="font-size:16px; color:rgba(28,26,24,0.65); line-height:1.5;">활용도 낮아지는 원인 · 실제 배포 여부</span></div>
+          <div style="display:flex; gap:10px; align-items:flex-start;"><span style="font-size:16px; color:rgba(28,26,24,0.66); font-weight:700; flex-shrink:0; width:70px; padding-top:2px;">기타</span><span style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.5;">자동화 스케줄러 · 구독 조합 추천 · PPT 활용</span></div>
+        </div>
+        <div style="margin-top:10px; font-size:18px; color:rgba(28,26,24,0.62); padding:8px 10px; background:rgba(28,26,24,0.03); border-radius:6px;">→ Q&A에서 카테고리별 해소 예정</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Part 1 Section ════ -->
+<div class="slide" id="sec-p1">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 1</div>
+    <div class="sec-title">왜 AI 대시보드인가<br>— 실무 프로젝트 경험 이야기</div>
+    <div class="sec-sub">BI 툴 vs AI 비교<br>시각화 사례 갤러리<br>비즈니스 대시보드 구축 사례<br>KT 적용 상상</div>
+  </div>
+</div>
+
+<!-- ════ BI 툴 vs AI ════ -->
+<div class="slide" id="s-bi">
+  <div class="tb"><span class="tb-cap">Part 1 · 1-1 — BI 툴 vs Claude Code</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="cmp-half ba-before">
+      <div>
+        <div class="cmp-label">기존 BI 툴 (Tableau · PowerBI)</div>
+        <div class="cmp-title">정해진 틀<br>안에서만</div>
+        <ul class="cmp-list">
+          <li>차트 타입 — 라이브러리 지원 범위로 제한</li>
+          <li>커스텀 시각화 — 개발자 필요, 오래 걸림</li>
+          <li>데이터 전처리 — 별도 ETL 파이프라인</li>
+          <li>인터랙션 — 필터·드릴다운 정도</li>
+          <li>비용 — 라이선스 + 구현 기간</li>
+        </ul>
+      </div>
+      <div style="font-size:18px; color:rgba(28,26,24,0.55);">잘 만들어진 도구 — 그러나 제약이 있다</div>
+    </div>
+    <div class="cmp-half ba-after">
+      <div>
+        <div class="cmp-label">Claude Code + AI 파이프라인</div>
+        <div class="cmp-title" style="color:#8ABFA8;">제약 없이<br>만든다</div>
+        <ul class="cmp-list">
+          <li class="hi"><strong>Three.js · D3.js · Canvas · WebGL</strong> — 구현 제약 없음</li>
+          <li class="hi"><strong>자연어로 설명</strong>하면 코드로 구현</li>
+          <li class="hi"><strong>7단계 파이프라인</strong>이 CSV → 대시보드 자동화</li>
+          <li class="hi"><strong>완전한 인터랙티브</strong> — hover · filter · drill · animation</li>
+          <li class="hi">비용 — <strong>API 사용료 + 시간 대폭 절감</strong></li>
+        </ul>
+      </div>
+      <div style="font-size:18px; color:rgba(28,26,24,0.55);">"단순 막대그래프가 아니다"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Q2: BI 툴 vs Claude Code ════ -->
+<div class="slide" id="s-qa2">
+  <div class="tb"><span class="tb-cap">사전질문 답변 — Q2 · 기존 BI 툴과의 비교</span><span class="tb-num">AI도구</span></div>
+  <div class="body" style="padding:0;">
+    <div class="cmp-half" style="background:rgba(239,125,134,0.04); flex:1; padding:32px 44px; display:flex; flex-direction:column; justify-content:flex-start; gap:0;">
+      <div style="font-size:11px; letter-spacing:0.13em; text-transform:uppercase; color:rgba(28,26,24,0.50); margin-bottom:14px; font-weight:600;">기존 BI 도구 — Tableau · Power BI</div>
+      <div style="font-size:22px; font-weight:700; color:#1C1A18; line-height:1.3; margin-bottom:18px; letter-spacing:-0.01em;">이런 상황에서<br>압도적으로 강합니다</div>
+      <ul class="cmp-list" style="flex:1;">
+        <li class="hi" style="font-size:14px;"><strong>전사 공유용 표준 리포트</strong> — 비기술 사용자도 직관적으로 조회 가능한 안정적 리포팅 환경</li>
+        <li style="font-size:14px;">드래그앤드롭 인터페이스 — 코드 없이 차트 구성 가능, 현업 사용자 셀프서비스</li>
+        <li style="font-size:14px;">정해진 데이터 커넥터 (DB·DW·SaaS 40+종) — 대규모 운영 시스템 연동</li>
+        <li style="font-size:14px;">권한 관리 · 거버넌스 · 감사 로그 — 엔터프라이즈 보안 요건 충족</li>
+        <li style="font-size:14px;">스케줄 새로고침 + 이메일 구독 리포트 배포</li>
+      </ul>
+      <div style="margin-top:18px; padding:14px 18px; background:rgba(239,125,134,0.08); border-radius:8px; border-left:3px solid rgba(196,100,90,0.35);">
+        <div style="font-size:12px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px;">한계</div>
+        <div style="font-size:13px; color:rgba(28,26,24,0.65); line-height:1.7;">
+          탐색적 분석·커스텀 시각화 어려움 · 초기 설계 수일~수주 소요<br>
+          1인당 고가 라이선스 · 새로운 데이터 형식 연결 시 개발 필요
+        </div>
+      </div>
+    </div>
+    <div class="cmp-half" style="background:rgba(138,191,168,0.07); flex:1; padding:32px 44px; display:flex; flex-direction:column; justify-content:flex-start; gap:0; border-left:1px solid var(--border);">
+      <div style="font-size:11px; letter-spacing:0.13em; text-transform:uppercase; color:#3A7060; margin-bottom:14px; font-weight:600;">Claude Code — AI 실행 에이전트</div>
+      <div style="font-size:22px; font-weight:700; color:#1C1A18; line-height:1.3; margin-bottom:18px; letter-spacing:-0.01em;">이런 상황에서<br>압도적으로 강합니다</div>
+      <ul class="cmp-list" style="flex:1;">
+        <li class="hi" style="font-size:14px;"><strong>탐색적 분석 · 빠른 프로토타이핑</strong> — CSV 받는 즉시 수분 내 대시보드 완성</li>
+        <li style="font-size:14px;">코드 수준 완전 커스텀 시각화 — D3.js · SVG · Plotly 등 제한 없음</li>
+        <li style="font-size:14px;">모든 데이터 형식 처리 — CSV · JSON · API · 웹 · PDF · 텍스트 전부</li>
+        <li style="font-size:14px;">cron · 스케줄러 연동 완전 자동화 — 원클릭 → 보고서 발송까지 파이프라인</li>
+        <li style="font-size:14px;">Claude 구독료만으로 운용 — 별도 BI 라이선스 불필요</li>
+      </ul>
+      <div style="margin-top:18px; padding:14px 18px; background:rgba(196,146,122,0.07); border-radius:8px; border-left:3px solid rgba(196,146,122,0.35);">
+        <div style="font-size:12px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px;">한계</div>
+        <div style="font-size:13px; color:rgba(28,26,24,0.65); line-height:1.7;">
+          비기술 최종 사용자 셀프서비스 불편 · 엔터프라이즈 거버넌스 기능 부족<br>
+          안정적 운영 리포트 배포보다는 분석·생성 단계에 적합
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Examples Section ════ -->
+<div class="slide" id="sec-ex">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 1 · 1-2 — 사례 갤러리</div>
+    <div class="sec-title">AI로 만든<br>데이터 시각화</div>
+    <div class="sec-sub">Globe · Avengers · Solar System<br>Business Dashboards × 4</div>
+  </div>
+</div>
+
+<!-- ════ Globe ════ -->
+<div class="slide" id="sd1">
+  <div class="tb"><span class="tb-cap">AI 데이터 시각화 예시 · 1 / 3</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="vid-left">
+      <div>
+        <div class="vid-part">Three.js · WebGL</div>
+        <div class="vid-title">Refugee Migration Globe</div>
+        <div class="vid-sub-serif">UNHCR 데이터 · 실제 이동 경로</div>
+        <div class="vid-desc">시리아 · 우크라이나 · 아프가니스탄<br>실제 인원 · 실제 이동 경로<br><br>아크 기하학 계산 문제 →<br>문제 기술 → Claude Code가 수식 탐색</div>
+        <div class="vid-steps">
+          <div class="vid-step"><span class="vid-step-n">01</span>UNHCR 데이터 파싱</div>
+          <div class="vid-step"><span class="vid-step-n">02</span>Three.js 구체 위 좌표 매핑</div>
+          <div class="vid-step"><span class="vid-step-n">03</span>아크 애니메이션 · 색상 인코딩</div>
+        </div>
+      </div>
+      <div class="vid-num">1 / 3</div>
+    </div>
+    <div class="vid-right">
+      <video autoplay loop muted playsinline><source src="assets/12_3-3_2_.MP4" type="video/mp4"></video>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Avengers ════ -->
+<div class="slide" id="sd2">
+  <div class="tb"><span class="tb-cap">AI 데이터 시각화 예시 · 2 / 3</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="vid-left">
+      <div>
+        <div class="vid-part">D3.js · Firecrawl MCP</div>
+        <div class="vid-title">Avengers Network Graph</div>
+        <div class="vid-sub-serif">스크린 공유 시간 기반 · 웹 스크래핑</div>
+        <div class="vid-desc">팬 위키 데이터 — 정제된 파일 없음<br>Firecrawl MCP → Claude Code 워크플로우 직접 연결</div>
+        <div class="vid-steps">
+          <div class="vid-step"><span class="vid-step-n">01</span>Marvel Wiki Firecrawl MCP 스크래핑</div>
+          <div class="vid-step"><span class="vid-step-n">02</span>관계 데이터 → JSON 엣지 리스트</div>
+          <div class="vid-step"><span class="vid-step-n">03</span>D3.js 포스 시뮬레이션</div>
+          <div class="vid-step"><span class="vid-step-n">04</span>동일 구조 → 스타워즈 · Tableau 확장</div>
+        </div>
+      </div>
+      <div class="vid-num">2 / 3</div>
+    </div>
+    <div class="vid-right">
+      <video autoplay loop muted playsinline><source src="assets/avengers.mp4" type="video/mp4"></video>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Solar System ════ -->
+<div class="slide" id="sd3">
+  <div class="tb"><span class="tb-cap">AI 데이터 시각화 예시 · 3 / 3</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="vid-left">
+      <div>
+        <div class="vid-part">React 19 · Three.js · Gemini API</div>
+        <div class="vid-title">Solar System AI</div>
+        <div class="vid-sub-serif">클릭 → Gemini API 실시간 응답</div>
+        <div class="vid-desc">행성 클릭 → AI 실시간 설명 생성<br><br>3D가 아니라 AI 응답 설계가 어려움<br>명확 · 간결 · 일반 독자 수준</div>
+        <div class="vid-steps">
+          <div class="vid-step"><span class="vid-step-n">01</span>React 19 + Three.js — 3D 궤도 역학</div>
+          <div class="vid-step"><span class="vid-step-n">02</span>Gemini API — 클릭 시 스트리밍 응답</div>
+          <div class="vid-step"><span class="vid-step-n">03</span>github: seoyeon924/solar-system-ai</div>
+        </div>
+      </div>
+      <div class="vid-num">3 / 3</div>
+    </div>
+    <div class="vid-right">
+      <video autoplay loop muted playsinline><source src="assets/solar-system.mp4" type="video/mp4"></video>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Business Dashboards Section ════ -->
+<div class="slide" id="sec-biz">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 1 · 1-2 — Business Dashboards</div>
+    <div class="sec-title">Claude Code로 만든<br>비즈니스 대시보드</div>
+    <div class="sec-sub">Marketing · PM · HR · Sales<br>산업군별 실제 결과물</div>
+  </div>
+</div>
+
+<!-- ════ Marketing Dashboard ════ -->
+<div class="slide" id="sd5a">
+  <div class="tb"><span class="tb-cap">Business Dashboards · 1 / 4</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="dash-left">
+      <div>
+        <div class="dash-part">Marketing Campaign</div>
+        <div class="dash-title">Marketing Campaign Analysis</div>
+        <div class="dash-sub-serif">채널 ROI · K-means 클러스터링 · 예산 시뮬레이션</div>
+        <div class="dash-desc">채널별 광고 성과 · 매출 추세 · 예산 시뮬레이션<br><br>K-means 클러스터링으로 채널 유형이 아닌<br>성과 패턴 기준 분류</div>
+        <div class="dash-tags"><span class="dash-tag">Chart.js</span><span class="dash-tag">K-means</span><span class="dash-tag">Simulation</span></div>
+      </div>
+      <div class="dash-num">1 / 4</div>
+    </div>
+    <div class="dash-right"><img src="assets/0_1-1_.png" alt="Marketing Dashboard"></div>
+  </div>
+</div>
+
+<!-- ════ PM Dashboard ════ -->
+<div class="slide" id="sd5c">
+  <div class="tb"><span class="tb-cap">Business Dashboards · 2 / 4</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="dash-left">
+      <div>
+        <div class="dash-part">PM Product Metrics</div>
+        <div class="dash-title">PM Product Metrics</div>
+        <div class="dash-sub-serif">메트릭 하이라키 · 이탈 위험 · 액션 플랜</div>
+        <div class="dash-desc">메트릭 하이라키 · 획득/이탈 비율 · 세그먼트별 이탈 위험<br><br>AI 액션 플랜 · 목표 트래킹 한 화면</div>
+        <div class="dash-tags"><span class="dash-tag">Metric Hierarchy</span><span class="dash-tag">Churn Risk</span><span class="dash-tag">Action Plan</span></div>
+      </div>
+      <div class="dash-num">2 / 4</div>
+    </div>
+    <div class="dash-right"><img src="assets/2_1-3_PM_Dashboard.png" alt="PM Dashboard"></div>
+  </div>
+</div>
+
+<!-- ════ HR Dashboard ════ -->
+<div class="slide" id="sd5d">
+  <div class="tb"><span class="tb-cap">Business Dashboards · 3 / 4</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="dash-left">
+      <div>
+        <div class="dash-part">HR People Analytics</div>
+        <div class="dash-title">HR Attrition Analytics</div>
+        <div class="dash-sub-serif">이탈 가능성 · 시점 예측</div>
+        <div class="dash-desc">헤드카운트 변화 · 채용 퍼널 · AI 이탈 위험 점수<br><br>레벨 · 부서별 세그먼트 분석 포함</div>
+        <div class="dash-tags"><span class="dash-tag">Attrition Prediction</span><span class="dash-tag">Recruiting Funnel</span><span class="dash-tag">Segment</span></div>
+      </div>
+      <div class="dash-num">3 / 4</div>
+    </div>
+    <div class="dash-right"><img src="assets/3_1-4_HR_.png" alt="HR Dashboard"></div>
+  </div>
+</div>
+
+<!-- ════ Sales Retention ════ -->
+<div class="slide" id="sd5e">
+  <div class="tb"><span class="tb-cap">Business Dashboards · 4 / 4</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="dash-left">
+      <div>
+        <div class="dash-part">Sales Retention</div>
+        <div class="dash-title">Sales Retention Analysis</div>
+        <div class="dash-sub-serif">MRR 분해 · 코호트 리텐션 · LTV 시뮬레이터</div>
+        <div class="dash-desc">MRR 분해 · 코호트 리텐션 · LTV 분석 · AI 알림<br><br>플랜별 매출 추세 · 이탈률 시뮬레이터 포함</div>
+        <div class="dash-tags"><span class="dash-tag">MRR</span><span class="dash-tag">Cohort</span><span class="dash-tag">LTV</span><span class="dash-tag">Simulator</span></div>
+      </div>
+      <div class="dash-num">4 / 4</div>
+    </div>
+    <div class="dash-right"><img src="assets/4_1-5_.png" alt="Sales Retention"></div>
+  </div>
+</div>
+
+<!-- ════ 비즈니스 대시보드 구축 사례 ════ -->
+<div class="slide" id="s-cases">
+  <div class="tb"><span class="tb-cap">Part 1 · 1-3 — 비즈니스 대시보드 구축 사례</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="eyebrow">Case Studies</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:16px;">결과물보다<br>과정이 있다</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.8;">문제 정의 → 데이터 파악<br>→ KPI 설계 → 시각화 결정<br>→ 피드백 반영</div>
+      </div>
+      <div class="slide-num">— — —</div>
+    </div>
+    <div style="flex:1; padding:40px 48px 40px 44px; display:flex; flex-direction:column; gap:12px; justify-content:center;">
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:22px 24px;">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:10px;">사례 01 — 비용/예산 분석</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:8px;">대시보드 UX 개선 컨설팅</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.75;">클라이언트: 실무자가 보는 화면과 임원이 보는 화면이 같은 문제<br>접근: 사용자 인터뷰 → KPI 계층 재정의 → 뷰 분리<br>결과: 의사결정 시간 단축 · 불필요한 드릴다운 제거</div>
+      </div>
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:22px 24px;">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:10px;">사례 02 — 마케팅 퍼포먼스</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:8px;">채널별 ROI 대시보드</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.75;">클라이언트: 채널이 많아서 어디에 예산을 써야 할지 모르는 문제<br>접근: K-means로 성과 패턴 기준 채널 클러스터링<br>결과: 고성과 채널 3개 집중 → 동일 예산으로 효율 38% 향상</div>
+      </div>
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:22px 24px;">
+        <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:10px;">사례 03 — 영업 실적 추적</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:8px;">MRR 분해 + 이탈 예측 대시보드</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.75;">클라이언트: 매출이 떨어지는데 어디서 새는지 모르는 문제<br>접근: MRR을 신규/확장/축소/이탈로 분해 → 코호트 리텐션 분석<br>결과: 이탈이 집중된 구간 3개월 내 발견 · 즉시 액션 가능</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ KT 적용 상상 ════ -->
+<div class="slide" id="s-kt">
+  <div class="tb"><span class="tb-cap">Part 1 · 1-4 — 우리 조직이라면?</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="eyebrow">KT IT기술부문 적용</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:16px;">"우리 조직에서는<br>어떤 대시보드를<br>만들 수 있을까?"</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.66); line-height:1.8;">동일한 7-에이전트 파이프라인으로<br>어떤 데이터든 → 인터랙티브 대시보드</div>
+      </div>
+      <div class="slide-num">— — —</div>
+    </div>
+    <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0;">
+      <div style="padding:36px 36px; border-right:1px solid var(--border); border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:18px; letter-spacing:0.1em; text-transform:uppercase; color:#8ABFA8; margin-bottom:4px;">서비스 운영</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">서비스 상태 실시간 모니터링</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); line-height:1.7;">응답시간 · 오류율 · 트래픽 추세<br>임계치 초과 시 자동 알림 대시보드</div>
+      </div>
+      <div style="padding:36px 36px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:18px; letter-spacing:0.1em; text-transform:uppercase; color:#efb05d; margin-bottom:4px;">장애 탐지</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">장애 탐지 / 품질 이상감지</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); line-height:1.7;">패턴 기반 이상 탐지<br>장애 발생 전 선행 지표 포착 · 시각화</div>
+      </div>
+      <div style="padding:36px 36px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:18px; letter-spacing:0.1em; text-transform:uppercase; color:#8dc8b4; margin-bottom:4px;">IT 자산</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">실시간 IT 자산 모니터링</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); line-height:1.7;">장비 수명 · 가동률 · 교체 예측<br>자산별 현황 인터랙티브 뷰</div>
+      </div>
+      <div style="padding:36px 36px; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:18px; letter-spacing:0.1em; text-transform:uppercase; color:#C4927A; margin-bottom:4px;">불량 관리</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">실시간 불량 장비 현황확인</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); line-height:1.7;">불량 발생 위치 · 빈도 · 심각도 분류<br>드릴다운으로 원인 탐색 가능</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Q3: 대시보드 체크리스트 ════ -->
+<div class="slide" id="s-qa3">
+  <div class="tb"><span class="tb-cap">사전질문 답변 — Q3 · 대시보드 설계 필수 체크사항</span><span class="tb-num">대시보드</span></div>
+  <div class="body" style="padding:0;">
+    <!-- Left: 5W -->
+    <div style="width:40%; border-right:1px solid var(--border); padding:28px 36px; display:flex; flex-direction:column; gap:0; background:#F7F5F2;">
+      <div style="font-size:11px; letter-spacing:0.13em; text-transform:uppercase; color:#7A5500; font-weight:600; margin-bottom:10px;">설계 전 반드시 정의할 5가지</div>
+      <div style="font-size:19px; font-weight:700; color:#1C1A18; line-height:1.35; margin-bottom:18px; letter-spacing:-0.01em;">5W 프레임워크</div>
+      <div style="font-size:13px; color:rgba(28,26,24,0.55); line-height:1.7; margin-bottom:18px;">이 5가지를 먼저 정하지 않으면,<br>아무리 예쁜 차트도 실무에서 쓸모가 없습니다.</div>
+      <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 14px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.20);">
+          <div style="font-size:17px; font-weight:800; color:#efb05d; width:32px; flex-shrink:0; text-align:center; line-height:1.2;">W</div>
+          <div><div style="font-size:14px; font-weight:700; color:#1C1A18; margin-bottom:2px;">Who — 누가 보는가?</div><div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.5;">임원 / 실무자 / 현장 담당자 — 독자가 달라지면 구조가 달라집니다</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 14px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.20);">
+          <div style="font-size:17px; font-weight:800; color:#efb05d; width:32px; flex-shrink:0; text-align:center; line-height:1.2;">W</div>
+          <div><div style="font-size:14px; font-weight:700; color:#1C1A18; margin-bottom:2px;">Why — 왜 봐야 하는가?</div><div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.5;">의사결정 / 이상탐지 / 정기 보고 — 목적이 KPI 선택을 결정합니다</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 14px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.20);">
+          <div style="font-size:17px; font-weight:800; color:#efb05d; width:32px; flex-shrink:0; text-align:center; line-height:1.2;">W</div>
+          <div><div style="font-size:14px; font-weight:700; color:#1C1A18; margin-bottom:2px;">What — 어떤 지표가 필요한가?</div><div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.5;">결과 지표 / 드라이버 / Actionable Input — 3계층 설계 (다음 패널 참고)</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 14px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.20);">
+          <div style="font-size:17px; font-weight:800; color:#efb05d; width:32px; flex-shrink:0; text-align:center; line-height:1.2;">W</div>
+          <div><div style="font-size:14px; font-weight:700; color:#1C1A18; margin-bottom:2px;">How — 어떻게 비교할 것인가?</div><div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.5;">전기 대비 / 목표 대비 / 업계 평균 — 맥락 없는 숫자는 의미가 없습니다</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 14px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.20);">
+          <div style="font-size:17px; font-weight:800; color:#efb05d; width:32px; flex-shrink:0; text-align:center; line-height:1.2;">W</div>
+          <div><div style="font-size:14px; font-weight:700; color:#1C1A18; margin-bottom:2px;">When — 언제 필요한가?</div><div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.5;">실시간 / 일간 / 주간 / 월간 — 갱신 주기가 아키텍처를 결정합니다</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Right: 3-Tier + 4단계 -->
+    <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+      <!-- 3-Tier 지표 체계 -->
+      <div style="flex:1; padding:24px 32px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:0;">
+        <div style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#3A7060; font-weight:600; margin-bottom:8px;">3-Tier 지표 체계</div>
+        <div style="font-size:16px; font-weight:700; color:#1C1A18; margin-bottom:14px;">Level이 낮을수록 개선 방법이 명확해집니다</div>
+        <div style="display:flex; flex-direction:column; gap:7px; flex:1;">
+          <div style="display:flex; align-items:center; gap:14px; padding:11px 16px; background:rgba(28,26,24,0.05); border-radius:8px;">
+            <div style="font-size:11px; font-weight:800; color:rgba(28,26,24,0.40); letter-spacing:0.06em; width:58px; flex-shrink:0;">LEVEL 1</div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#1C1A18;">결과 지표 <span style="font-size:11px; color:rgba(28,26,24,0.45); font-weight:400;">(후행)</span></div><div style="font-size:12px; color:rgba(28,26,24,0.55);">매출 · CLV · 전환율 — 이미 일어난 일, 원인 추적 어려움</div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px; padding:11px 16px; background:rgba(138,191,168,0.09); border-radius:8px; border:1px solid rgba(138,191,168,0.20);">
+            <div style="font-size:11px; font-weight:800; color:#4A8A72; letter-spacing:0.06em; width:58px; flex-shrink:0;">LEVEL 2</div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#1C1A18;">드라이버 지표 <span style="font-size:11px; color:rgba(28,26,24,0.45); font-weight:400;">(선행)</span></div><div style="font-size:12px; color:rgba(28,26,24,0.55);">배너 CTR · 앱설치 전환율 — 결과보다 먼저 움직여 예측·대응 가능</div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px; padding:11px 16px; background:rgba(138,191,168,0.16); border-radius:8px; border:1px solid rgba(138,191,168,0.30);">
+            <div style="font-size:11px; font-weight:800; color:#2E6A52; letter-spacing:0.06em; width:58px; flex-shrink:0;">LEVEL 3</div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#1C1A18;">Actionable Input 지표 <span style="font-size:11px; color:#4A8A72; font-weight:500;">← 이게 핵심</span></div><div style="font-size:12px; color:rgba(28,26,24,0.55);">소재별 클릭전환율 · 캠페인별 노출 CTR — 낮으면 즉시 뭘 바꿀지 알 수 있음</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 4단계 구조 -->
+      <div style="flex:1; padding:24px 32px; display:flex; flex-direction:column; gap:0;">
+        <div style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#7A5500; font-weight:600; margin-bottom:8px;">대시보드 4단계 구조</div>
+        <div style="font-size:16px; font-weight:700; color:#1C1A18; margin-bottom:14px;">이 4가지가 모두 있어야 의사결정이 가능합니다</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1;">
+          <div style="padding:12px 16px; background:rgba(239,176,93,0.08); border-radius:8px; border:1px solid rgba(239,176,93,0.22);">
+            <div style="font-size:12px; font-weight:700; color:#7A5500; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px;">① Quick Visibility</div>
+            <div style="font-size:13px; font-weight:600; color:#1C1A18; margin-bottom:3px;">KPI 현황을 5초 안에</div>
+            <div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.55;">잘되고 있는지 안 되고 있는지를 첫 화면에서 즉시 파악. 색상 상태 표시 필수.</div>
+          </div>
+          <div style="padding:12px 16px; background:rgba(196,146,122,0.07); border-radius:8px; border:1px solid rgba(196,146,122,0.22);">
+            <div style="font-size:12px; font-weight:700; color:#8A4A2A; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px;">② Drill-down</div>
+            <div style="font-size:13px; font-weight:600; color:#1C1A18; margin-bottom:3px;">원인 후보 탐색</div>
+            <div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.55;">카테고리별 · 세그먼트별로 내려가면서 "어디서 왜 이상한가"를 추적.</div>
+          </div>
+          <div style="padding:12px 16px; background:rgba(138,191,168,0.09); border-radius:8px; border:1px solid rgba(138,191,168,0.22);">
+            <div style="font-size:12px; font-weight:700; color:#3A7060; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px;">③ Action Items</div>
+            <div style="font-size:13px; font-weight:600; color:#1C1A18; margin-bottom:3px;">다음에 뭘 해야 하는가</div>
+            <div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.55;">대시보드를 봤을 때 "그래서 뭐를 해야 해?"가 바로 나와야 합니다.</div>
+          </div>
+          <div style="padding:12px 16px; background:rgba(28,26,24,0.04); border-radius:8px; border:1px solid rgba(28,26,24,0.10);">
+            <div style="font-size:12px; font-weight:700; color:rgba(28,26,24,0.50); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px;">④ Raw Data</div>
+            <div style="font-size:13px; font-weight:600; color:#1C1A18; margin-bottom:3px;">깊이 있는 탐색</div>
+            <div style="font-size:12px; color:rgba(28,26,24,0.55); line-height:1.55;">원본 테이블 직접 조회 · CSV 다운로드 탭. 실무자가 직접 파고들 수 있게.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Q4: 데이터 특성별 차트 선택 ════ -->
+<div class="slide" id="s-qa4">
+  <div class="tb"><span class="tb-cap">사전질문 답변 — Q4 · 데이터 특성별 차트 선택 기준</span><span class="tb-num">대시보드</span></div>
+  <div class="body" style="padding:0;">
+    <!-- Left: Principle -->
+    <div style="width:36%; border-right:1px solid var(--border); padding:28px 36px; display:flex; flex-direction:column; gap:0; background:#F7F5F2;">
+      <div style="font-size:11px; letter-spacing:0.13em; text-transform:uppercase; color:rgba(28,26,24,0.48); font-weight:600; margin-bottom:12px;">대시보드 · Q4</div>
+      <div style="font-size:19px; font-weight:700; color:#1C1A18; line-height:1.35; margin-bottom:12px; letter-spacing:-0.01em;">"질문이<br>차트를 결정한다"</div>
+      <div style="font-size:13px; color:rgba(28,26,24,0.60); line-height:1.75; margin-bottom:20px; flex:1;">차트 종류를 먼저 고르는 게 아니라, 답해야 할 질문이 먼저 나오면 차트 선택은 자연스럽게 따라옵니다. "이 차트가 답할 질문이 무엇인가"를 항상 먼저 써보세요.</div>
+      <div style="font-size:12px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:10px;">꼭 지켜야 할 5가지</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; gap:8px; font-size:13px; color:rgba(28,26,24,0.70); line-height:1.5; align-items:flex-start;"><span style="color:#8ABFA8; font-weight:700; flex-shrink:0;">✓</span>막대 차트 Y축은 반드시 0부터 시작</div>
+        <div style="display:flex; gap:8px; font-size:13px; color:rgba(28,26,24,0.70); line-height:1.5; align-items:flex-start;"><span style="color:#8ABFA8; font-weight:700; flex-shrink:0;">✓</span>파이 차트는 도넛으로 대체할 것</div>
+        <div style="display:flex; gap:8px; font-size:13px; color:rgba(28,26,24,0.70); line-height:1.5; align-items:flex-start;"><span style="color:#8ABFA8; font-weight:700; flex-shrink:0;">✓</span>강조 색상은 최대 1개 — 5개 다른 색은 아무것도 강조 안 함</div>
+        <div style="display:flex; gap:8px; font-size:13px; color:rgba(28,26,24,0.70); line-height:1.5; align-items:flex-start;"><span style="color:#8ABFA8; font-weight:700; flex-shrink:0;">✓</span>수치에 반드시 맥락 추가 (전기 대비, N일 평균)</div>
+        <div style="display:flex; gap:8px; font-size:13px; color:rgba(28,26,24,0.70); line-height:1.5; align-items:flex-start;"><span style="color:#8ABFA8; font-weight:700; flex-shrink:0;">✓</span>라인 5개 이상 스파게티 차트 금지</div>
+      </div>
+    </div>
+    <!-- Right: Chart type guide -->
+    <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+      <div style="padding:14px 28px 10px; border-bottom:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0;">
+        <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.45); letter-spacing:0.06em; text-transform:uppercase;">차트 유형</div>
+        <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.45); letter-spacing:0.06em; text-transform:uppercase; padding:0 12px;">언제 씁니까?</div>
+        <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.45); letter-spacing:0.06em; text-transform:uppercase; padding:0 12px;">예시 질문</div>
+        <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.45); letter-spacing:0.06em; text-transform:uppercase;">주의사항</div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:4px 0;">
+        <div style="display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0; padding:10px 28px; border-bottom:1px solid var(--border); align-items:center;">
+          <div style="font-size:14px; font-weight:700; color:#1C1A18;">라인 차트</div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.70); padding:0 12px; line-height:1.55;"><strong style="color:#1C1A18;">시간 변화 추세</strong> 파악<br><span style="font-size:12px; color:rgba(28,26,24,0.50);">연속적 데이터 · 기간 비교</span></div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.65); padding:0 12px; line-height:1.55; font-style:italic;">"월별 매출이 늘고 있나?"<br>"전년 동기 대비 추세는?"</div>
+          <div style="font-size:12px; color:rgba(196,100,90,0.80); line-height:1.55; padding-left:4px;">범주 간 단순 비교에<br>사용 금지</div>
+        </div>
+        <div style="display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0; padding:10px 28px; border-bottom:1px solid var(--border); align-items:center; background:rgba(28,26,24,0.02);">
+          <div style="font-size:14px; font-weight:700; color:#1C1A18;">세로 막대</div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.70); padding:0 12px; line-height:1.55;"><strong style="color:#1C1A18;">범주별 비교</strong> (≤7개)<br><span style="font-size:12px; color:rgba(28,26,24,0.50);">항목이 7개 이하일 때 최적</span></div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.65); padding:0 12px; line-height:1.55; font-style:italic;">"채널별 전환율 비교"<br>"팀별 이번 달 비용"</div>
+          <div style="font-size:12px; color:rgba(196,100,90,0.80); line-height:1.55; padding-left:4px;">Y축 반드시 0부터<br>시작할 것</div>
+        </div>
+        <div style="display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0; padding:10px 28px; border-bottom:1px solid var(--border); align-items:center;">
+          <div style="font-size:14px; font-weight:700; color:#1C1A18;">가로 막대</div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.70); padding:0 12px; line-height:1.55;"><strong style="color:#1C1A18;">범주가 8개 이상</strong>이거나<br><span style="font-size:12px; color:rgba(28,26,24,0.50);">레이블이 길 때 사용</span></div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.65); padding:0 12px; line-height:1.55; font-style:italic;">"20개 상품별 판매량 순위"<br>"서비스 이름이 긴 비교"</div>
+          <div style="font-size:12px; color:rgba(28,26,24,0.50); line-height:1.55; padding-left:4px;">레이블 가독성<br>확보에 유리</div>
+        </div>
+        <div style="display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0; padding:10px 28px; border-bottom:1px solid var(--border); align-items:center; background:rgba(28,26,24,0.02);">
+          <div style="font-size:14px; font-weight:700; color:#1C1A18;">도넛 차트</div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.70); padding:0 12px; line-height:1.55;"><strong style="color:#1C1A18;">구성 비율</strong> 표현<br><span style="font-size:12px; color:rgba(28,26,24,0.50);">전체 합이 100%일 때</span></div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.65); padding:0 12px; line-height:1.55; font-style:italic;">"채널별 매출 비중"<br>"카테고리별 구성 비율"</div>
+          <div style="font-size:12px; color:rgba(28,26,24,0.50); line-height:1.55; padding-left:4px;">파이차트 대신<br>항상 도넛 사용</div>
+        </div>
+        <div style="display:grid; grid-template-columns:90px 1fr 1fr 180px; gap:0; padding:10px 28px; align-items:center;">
+          <div style="font-size:14px; font-weight:700; color:#1C1A18;">스캐터 플롯</div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.70); padding:0 12px; line-height:1.55;"><strong style="color:#1C1A18;">두 변수의 관계</strong> 파악<br><span style="font-size:12px; color:rgba(28,26,24,0.50);">상관 · 이상치 탐색</span></div>
+          <div style="font-size:13px; color:rgba(28,26,24,0.65); padding:0 12px; line-height:1.55; font-style:italic;">"광고비 vs 전환율 상관"<br>"이탈률 vs LTV 관계"</div>
+          <div style="font-size:12px; color:rgba(28,26,24,0.50); line-height:1.55; padding-left:4px;">X=선행 지표<br>Y=후행 지표 원칙</div>
+        </div>
+      </div>
+      <div style="padding:12px 28px; background:#EDECEA; border-top:1px solid var(--border); flex-shrink:0; display:flex; align-items:center; gap:16px;">
+        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(28,26,24,0.45); flex-shrink:0; font-weight:600;">맥락 추가 예시</div>
+        <div style="font-size:13px; color:rgba(28,26,24,0.50); flex-shrink:0; text-decoration:line-through;">"560개"</div>
+        <div style="font-size:13px; color:rgba(28,26,24,0.40);">→</div>
+        <div style="font-size:14px; color:#1C1A18; font-weight:500;">"560개 · 전주 대비 <span style="color:#4A8A72;">+12%</span> · 14일 평균 455개"</div>
+        <div style="margin-left:auto; font-size:13px; color:rgba(28,26,24,0.50); font-style:italic;">수치는 언제나 비교 기준과 함께 표시합니다</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Part 2+3 Section ════ -->
+<div class="slide" id="sec-p23">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 2 + 3</div>
+    <div class="sec-title">실제로 어떻게 만드나<br>— 구조 이해 + 라이브 데모</div>
+    <div class="sec-sub">Claude Code 포지셔닝<br>7-에이전트 파이프라인 — 왜 이렇게 나눴나<br>시행착오 공유<br>라이브 데모</div>
+  </div>
+</div>
+
+<!-- ════ Claude Code 포지셔닝 ════ -->
+<div class="slide" id="s-pos">
+  <div class="tb"><span class="tb-cap">Part 2 · 2-1 — Claude Code가 뭔가</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="eyebrow">Positioning</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:16px;">Claude Code는<br>어디에<br>쓰는 도구인가</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.66); line-height:1.8;">"AI 에이전트가 코드를 직접 실행하는<br>터미널 기반 개발 환경"</div>
+      </div>
+      <div class="slide-num">— — —</div>
+    </div>
+    <div style="flex:1; padding:40px 48px 40px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+      <div style="background:rgba(28,26,24,0.03); border-radius:12px; padding:18px 20px; border:1px solid rgba(28,26,24,0.06);">
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.66); width:120px; flex-shrink:0;">ChatGPT</span><span style="font-size:16px; color:rgba(28,26,24,0.55);">대화 AI — 코드 제안은 하지만 실행 환경 없음, 파일 시스템 접근 없음</span></div>
+      </div>
+      <div style="background:rgba(28,26,24,0.03); border-radius:12px; padding:18px 20px; border:1px solid rgba(28,26,24,0.06);">
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.66); width:120px; flex-shrink:0;">Python/Jupyter</span><span style="font-size:16px; color:rgba(28,26,24,0.55);">코딩 환경 — 사람이 직접 코드를 짜야 함, AI가 보조</span></div>
+      </div>
+      <div style="background:rgba(28,26,24,0.03); border-radius:12px; padding:18px 20px; border:1px solid rgba(28,26,24,0.06);">
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;"><span style="font-size:18px; font-weight:700; color:rgba(28,26,24,0.66); width:120px; flex-shrink:0;">Tableau/PowerBI</span><span style="font-size:16px; color:rgba(28,26,24,0.55);">BI 툴 — 정해진 차트 타입, 커스텀 시각화 어려움</span></div>
+      </div>
+      <div style="background:rgba(138,191,168,0.1); border-radius:12px; padding:18px 20px; border:1px solid rgba(138,191,168,0.22);">
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:8px;"><span style="font-size:18px; font-weight:700; color:#8ABFA8; width:120px; flex-shrink:0;">Claude Code</span><span style="font-size:16px; color:rgba(28,26,24,0.75);">AI 에이전트가 파일 읽기·코드 실행·대시보드 생성까지 직접 수행<br>에이전트를 여러 개 조합 → 분석 파이프라인 자동화</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Q1: Claude Code vs AI 도구 ════ -->
+<div class="slide" id="s-qa1">
+  <div class="tb"><span class="tb-cap">사전질문 답변 — Q1 · AI 도구 포지셔닝</span><span class="tb-num">AI도구</span></div>
+  <div class="body" style="flex-direction:column; padding:0;">
+    <div style="padding:18px 52px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:18px; flex-shrink:0; background:#F7F5F2;">
+      <span style="font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#3A7060; font-weight:700; background:rgba(74,138,114,0.16); padding:4px 10px; border-radius:20px; flex-shrink:0;">AI도구 · Q1</span>
+      <div style="font-size:19px; font-weight:700; color:#1C1A18; letter-spacing:-0.01em;">Claude Code와 다른 AI 도구의 차별점은 무엇인가요?</div>
+      <div style="margin-left:auto; font-size:13px; color:rgba(28,26,24,0.45); flex-shrink:0; font-style:italic;">"같은 Claude 기반이어도 작동 방식이 완전히 다르다"</div>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; padding:0 52px 0; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; border-bottom:2px solid rgba(28,26,24,0.18); padding:12px 0 9px; flex-shrink:0;">
+        <div></div>
+        <div style="font-size:13px; font-weight:700; color:rgba(28,26,24,0.60); padding:0 14px;">Claude AI <span style="font-size:11px; font-weight:400; color:rgba(28,26,24,0.40);">(웹 브라우저)</span></div>
+        <div style="font-size:13px; font-weight:700; color:rgba(28,26,24,0.60); padding:0 14px;">Cursor · IDE AI <span style="font-size:11px; font-weight:400; color:rgba(28,26,24,0.40);">(에디터 통합)</span></div>
+        <div style="font-size:13px; font-weight:700; color:#3A7060; padding:0 14px; display:flex; align-items:center; gap:8px;">Claude Code <span style="font-size:10px; font-weight:500; background:#4A8A72; color:white; padding:1px 7px; border-radius:10px; white-space:nowrap;">★ 오늘 주인공</span></div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:4px 0;">
+        <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; padding:11px 0; border-bottom:1px solid var(--border); align-items:start;">
+          <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.04em; text-transform:uppercase; padding-top:3px;">파일 접근</div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">수동 업로드만 가능<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">파일별로 직접 첨부해야 함</span></div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">에디터에 열린 파일만<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">프로젝트 폴더 범위 내 한정</span></div>
+          <div style="font-size:14px; color:#1C1A18; padding:6px 14px; line-height:1.55; font-weight:500; background:rgba(138,191,168,0.10); border-radius:6px; margin-right:4px;">내 컴퓨터 전체 파일시스템<br><span style="font-size:12px; color:#4A8A72; font-weight:400;">폴더 이동·검색·생성 전부 가능</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; padding:11px 0; border-bottom:1px solid var(--border); align-items:start;">
+          <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.04em; text-transform:uppercase; padding-top:3px;">코드 실행</div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">실행 불가 — 제안만<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">직접 복사해서 실행해야 함</span></div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">에디터 내 실행 지원<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">터미널 연동 가능한 IDE 한정</span></div>
+          <div style="font-size:14px; color:#1C1A18; padding:6px 14px; line-height:1.55; font-weight:500; background:rgba(138,191,168,0.10); border-radius:6px; margin-right:4px;">터미널에서 직접 실행 + 자동 재시도<br><span style="font-size:12px; color:#4A8A72; font-weight:400;">오류 발생 시 원인 분석 후 수정·재실행</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; padding:11px 0; border-bottom:1px solid var(--border); align-items:start;">
+          <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.04em; text-transform:uppercase; padding-top:3px;">규칙 기억</div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">새 채팅마다 초기화<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">매번 같은 설명을 반복해야 함</span></div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">.cursorrules 파일로 부분 저장<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">코딩 규칙 중심, 범위 제한적</span></div>
+          <div style="font-size:14px; color:#1C1A18; padding:6px 14px; line-height:1.55; font-weight:500; background:rgba(138,191,168,0.10); border-radius:6px; margin-right:4px;">CLAUDE.md로 영구 유지<br><span style="font-size:12px; color:#4A8A72; font-weight:400;">색상·형식·출력경로 규칙 한 번만 정의</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; padding:11px 0; border-bottom:1px solid var(--border); align-items:start;">
+          <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.04em; text-transform:uppercase; padding-top:3px;">비개발자 사용</div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">가능 (대화 인터페이스)<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">단, 결과 파일 처리는 수동</span></div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">어려움<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">IDE 환경 설정 지식 필요</span></div>
+          <div style="font-size:14px; color:#1C1A18; padding:6px 14px; line-height:1.55; font-weight:500; background:rgba(138,191,168,0.10); border-radius:6px; margin-right:4px;">자연어 요청 → 완성된 결과물<br><span style="font-size:12px; color:#4A8A72; font-weight:400;">데이터분석가 · 기획자 · 디자이너 모두 OK</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:148px 1fr 1fr 1fr; gap:0; padding:11px 0; align-items:start;">
+          <div style="font-size:11px; font-weight:700; color:rgba(28,26,24,0.55); letter-spacing:0.04em; text-transform:uppercase; padding-top:3px;">자동화 파이프라인</div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">불가<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">단계마다 개별 요청 필요</span></div>
+          <div style="font-size:14px; color:rgba(28,26,24,0.58); padding:0 14px; line-height:1.55;">에디터 내 제한적 자동화<br><span style="font-size:12px; color:rgba(28,26,24,0.38);">복잡한 다단계 흐름은 어려움</span></div>
+          <div style="font-size:14px; color:#1C1A18; padding:6px 14px; line-height:1.55; font-weight:500; background:rgba(138,191,168,0.10); border-radius:6px; margin-right:4px;">에이전트팀 · cron 스케줄러 연동<br><span style="font-size:12px; color:#4A8A72; font-weight:400;">7단계 파이프라인 완전 자동화 가능</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:13px 52px; background:#EDECEA; border-top:1px solid var(--border); flex-shrink:0; display:flex; align-items:center; gap:16px;">
+      <div style="font-size:11px; letter-spacing:0.09em; text-transform:uppercase; color:rgba(28,26,24,0.48); flex-shrink:0; font-weight:600;">정리하면</div>
+      <div style="font-size:14px; color:#1C1A18; line-height:1.6;"><strong>Claude AI</strong>는 대화 도구, <strong>Cursor</strong>는 코딩 보조 에디터, <strong>Claude Code</strong>는 내 컴퓨터 전체를 직접 조작하는 실행 에이전트입니다. 용도가 전혀 다르므로, 목적에 맞는 도구를 선택하는 것이 먼저입니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Claude Code 구조 개요 ════ -->
+<div class="slide" id="s5">
+  <div class="tb"><span class="tb-cap">Part 2 · Claude Code 프로젝트 구조</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:0; display:flex; flex-direction:row; min-height:0; flex:1;">
+    <div style="width:36%; border-right:1px solid rgba(28,26,24,0.07); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div class="eyebrow">Claude Code</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:20px;">4개 레이어로<br>구성된다</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.66); line-height:1.8;">명확한 레이어 분리가<br>재사용성과 유지보수를<br>가능하게 한다</div>
+      </div>
+      <div style="font-size:18px; color:rgba(28,26,24,0.55); line-height:1.8;">CLAUDE.md · agents · skills · runs</div>
+    </div>
+    <div style="flex:1; padding:44px 52px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+      <div style="background:#f0f0ef; border-radius:14px; padding:18px 22px; display:flex; gap:20px; align-items:flex-start;">
+        <div style="width:110px; flex-shrink:0;"><div style="font-family:monospace; font-size:18px; color:#555; font-weight:700; margin-bottom:3px;">CLAUDE.md</div><div style="font-size:9px; color:#888; letter-spacing:0.08em; text-transform:uppercase;">오케스트레이터</div></div>
+        <div><div style="font-size:18px; font-weight:700; color:#111; margin-bottom:5px;">"파이프라인 실행해줘" 한 마디면 충분</div><div style="font-size:18px; color:#555; line-height:1.6;">7개 에이전트 호출 순서·규칙·원칙을 한 파일에 선언. 팀 전체의 업무 지시서 역할.</div></div>
+      </div>
+      <div style="background:#e5f2ee; border-radius:14px; padding:18px 22px; display:flex; gap:20px; align-items:flex-start;">
+        <div style="width:110px; flex-shrink:0;"><div style="font-family:monospace; font-size:18px; color:#4a8878; font-weight:700; margin-bottom:3px;">.claude/agents/</div><div style="font-size:9px; color:#60a898; letter-spacing:0.08em; text-transform:uppercase;">에이전트 정의</div></div>
+        <div><div style="font-size:18px; font-weight:700; color:#0a2e28; margin-bottom:5px;">에이전트 한 명 = 파일 하나</div><div style="font-size:18px; color:#3a6a58; line-height:1.6;">역할·모델·허용 도구를 각 파일에 선언. data-ingestion → eda → problem → metrics → analysis → dashboard → report</div></div>
+      </div>
+      <div style="background:#ede8f5; border-radius:14px; padding:18px 22px; display:flex; gap:20px; align-items:flex-start;">
+        <div style="width:110px; flex-shrink:0;"><div style="font-family:monospace; font-size:18px; color:#7a60a0; font-weight:700; margin-bottom:3px;">.claude/skills/</div><div style="font-size:9px; color:#9590bb; letter-spacing:0.08em; text-transform:uppercase;">실행 절차서</div></div>
+        <div><div style="font-size:18px; font-weight:700; color:#221a44; margin-bottom:5px;">특정 에이전트에게만 주입하는 규칙</div><div style="font-size:18px; color:#5a4888; line-height:1.6;">에이전트(누가)와 스킬(어떻게)을 분리해 독립적으로 수정 가능. 디자인 시스템·차트 원칙·파이프라인 실행 규칙.</div></div>
+      </div>
+      <div style="background:#f5f0e0; border-radius:14px; padding:18px 22px; display:flex; gap:20px; align-items:flex-start;">
+        <div style="width:110px; flex-shrink:0;"><div style="font-family:monospace; font-size:18px; color:#7a6820; font-weight:700; margin-bottom:3px;">runs/latest/</div><div style="font-size:9px; color:#b0a070; letter-spacing:0.08em; text-transform:uppercase;">작업 공간</div></div>
+        <div><div style="font-size:18px; font-weight:700; color:#2e2400; margin-bottom:5px;">input/ → output/ 자동 생성</div><div style="font-size:18px; color:#6a5820; line-height:1.6;">CSV 파일 하나 넣으면 7단계 결과물이 번호 순서대로 생성. 체크포인트 내장 — 실패 지점부터 재실행.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ════ 7에이전트 사상 (s10d 스타일 — 왜 이렇게 나눴나) ════ -->
+<div class="slide" id="s-why">
+  <div class="tb"><span class="tb-cap">Part 2 · 2-2 — 7에이전트, 왜 이렇게 나눴나</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:0;">
+    <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div class="eyebrow">설계 사상</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); line-height:1.35; margin-bottom:20px;">구조보다<br>사상이 먼저</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.66); line-height:1.8;">어떤 실패를 겪었고<br>왜 이 구조로 왔는지</div>
+      </div>
+    </div>
+    <div style="flex:1; padding:40px 52px 40px 48px; display:flex; flex-direction:column; gap:12px; justify-content:center; overflow:auto;">
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#8dc8b4; letter-spacing:0.12em; flex-shrink:0;">WHY 01</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">에이전트를 왜 7개로 나눴나요?</span></div>
+        <div style="font-size:18px; font-weight:600; color:rgba(28,26,24,0.5); margin-bottom:8px; padding-left:28px;">컨텍스트 길이 한계 + 재실행 단위</div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">CSV + 분석 보고서 7개가 한 세션에 누적되면 <strong style="color:rgba(28,26,24,0.85);">메모리가 빠르게 차오릅니다</strong></span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">에이전트로 나누면 각 단계가 <strong style="color:rgba(28,26,24,0.85);">자기에게 필요한 파일만</strong> 새 컨텍스트에서 읽습니다</span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">한 단계만 바꾸고 싶으면 <code style="font-size:10.5px; color:#aaa;">@dashboard</code>만 재실행 — <strong style="color:rgba(28,26,24,0.85);">이전 결과물은 그대로</strong></span></div>
+        </div>
+      </div>
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#8dc8b4; letter-spacing:0.12em; flex-shrink:0;">WHY 02</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">에이전트와 스킬은 뭐가 다른가요?</span></div>
+        <div style="font-size:18px; font-weight:600; color:rgba(28,26,24,0.5); margin-bottom:8px; padding-left:28px;"><span style="color:#8dc8b4;">누가 하는가</span> vs <span style="color:#c0b0e0;">어떻게 하는가</span></div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;"><strong style="color:rgba(28,26,24,0.85);">에이전트</strong> — 역할·모델·권한이 고정된 AI 직원</span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;"><strong style="color:rgba(28,26,24,0.85);">스킬</strong> — 그 직원이 작업할 때 따르는 실행 절차서</span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">나누는 이유 — <strong style="color:rgba(28,26,24,0.85);">'누가'와 '어떻게'를 분리</strong>해 각각 독립적으로 수정 가능</span></div>
+        </div>
+      </div>
+      <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#8dc8b4; letter-spacing:0.12em; flex-shrink:0;">WHY 03</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">에이전트별로 모델을 다르게 쓰는 이유는?</span></div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">단순 전처리·요약 → <code style="font-size:10.5px; color:#aaa;">claude-haiku</code> (빠르고 저렴)</span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">HTML 대시보드 생성 → <code style="font-size:10.5px; color:#efb05d;">claude-sonnet</code> (복잡한 코드 품질)</span></div>
+          <div style="display:flex; gap:8px;"><span style="color:rgba(28,26,24,0.55); flex-shrink:0;">—</span><span style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;"><strong style="color:rgba(28,26,24,0.85);">Haiku×6 / Sonnet×1</strong> 구성으로 비용 최소화</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 7에이전트 인터랙티브 ════ -->
+  <div class="slide" id="s10b">
+    <div class="tb"><span class="tb-cap">Part 2 — 7개 에이전트 · 역할 정의</span><span class="tb-num">— — —</span></div>
+    <div class="body" style="flex-direction:column; min-height:0; background:#0d0d0d;">
+      <div style="display:flex; gap:12px; padding:20px 28px 16px; flex-shrink:0; border-bottom:1px solid rgba(28,26,24,0.07);">
+        <div id="ag-card-0" onclick="selectAgent(0)" class="ag-card ag-card-active" style="flex:1; background:#f0f0ef; border:2px solid #d0cfc8; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#111;">🧑‍💻</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#999; margin-bottom:4px;">STEP 01</div>
+          <div style="font-size:16px; font-weight:700; color:#222; font-family:monospace; margin-bottom:8px;">@data-ingestion</div>
+          <div style="font-size:9px; color:#888; margin-bottom:8px;">direct execution</div>
+          <div style="font-size:9px; color:#555; line-height:1.6;">dataset_profile.md<br>sample.csv</div>
+        </div>
+        <div id="ag-card-1" onclick="selectAgent(1)" class="ag-card" style="flex:1; background:#ede8f5; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#332255;">🧑‍🔬</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#9988bb; margin-bottom:4px;">STEP 02</div>
+          <div style="font-size:16px; font-weight:700; color:#332255; font-family:monospace; margin-bottom:8px;">@eda</div>
+          <div style="font-size:9px; color:#9988bb; margin-bottom:8px;">direct execution</div>
+          <div style="font-size:9px; color:#554477; line-height:1.6;">eda_report.md<br>3 core questions</div>
+        </div>
+        <div id="ag-card-2" onclick="selectAgent(2)" class="ag-card" style="flex:1; background:#f5e8ea; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#3d1a22;">🧑‍🏫</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#bb8899; margin-bottom:4px;">STEP 03</div>
+          <div style="font-size:16px; font-weight:700; color:#3d1a22; font-family:monospace; margin-bottom:8px;">@problem</div>
+          <div style="font-size:9px; color:#bb8899; margin-bottom:8px;">→ /eda 결과 정제</div>
+          <div style="font-size:9px; color:#664455; line-height:1.6;">problem_definition.md<br>5 questions</div>
+        </div>
+        <div id="ag-card-3" onclick="selectAgent(3)" class="ag-card" style="flex:1; background:#f5f0e0; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#3a2e0a;">🧑‍💼</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#b0a070; margin-bottom:4px;">STEP 04</div>
+          <div style="font-size:16px; font-weight:700; color:#3a2e0a; font-family:monospace; margin-bottom:8px;">@metrics</div>
+          <div style="font-size:9px; color:#b0a070; margin-bottom:8px;">metric-detective</div>
+          <div style="font-size:9px; color:#665522; line-height:1.6;">kpi_summary.md<br>benchmarks</div>
+        </div>
+        <div id="ag-card-4" onclick="selectAgent(4)" class="ag-card" style="flex:1; background:#e8f0ec; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#0d3320;">👩‍💻</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#7aaa8a; margin-bottom:4px;">STEP 05</div>
+          <div style="font-size:16px; font-weight:700; color:#0d3320; font-family:monospace; margin-bottom:8px;">@analysis</div>
+          <div style="font-size:9px; color:#7aaa8a; margin-bottom:8px;">/analyze skill</div>
+          <div style="font-size:9px; color:#2a5a3a; line-height:1.6;">analysis_report.md<br>3 findings</div>
+        </div>
+        <div id="ag-card-5" onclick="selectAgent(5)" class="ag-card" style="flex:1; background:#ebe8f5; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#221a44;">🧑‍🎨</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#9590bb; margin-bottom:4px;">STEP 06</div>
+          <div style="font-size:16px; font-weight:700; color:#221a44; font-family:monospace; margin-bottom:8px;">@dashboard</div>
+          <div style="font-size:9px; color:#9590bb; margin-bottom:8px;">/visualize skill</div>
+          <div style="font-size:9px; color:#4a3a77; line-height:1.6;">dashboard_spec.json<br>HTML dashboard</div>
+        </div>
+        <div id="ag-card-6" onclick="selectAgent(6)" class="ag-card" style="flex:1; background:#e5f2ee; border:2px solid transparent; border-radius:14px; padding:20px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:26px; margin-bottom:10px; color:#0a2e28;">👩‍💼</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#60a898; margin-bottom:4px;">STEP 07</div>
+          <div style="font-size:16px; font-weight:700; color:#0a2e28; font-family:monospace; margin-bottom:8px;">@report</div>
+          <div style="font-size:9px; color:#60a898; margin-bottom:8px;">/review skill</div>
+          <div style="font-size:9px; color:#1a5548; line-height:1.6;">executive_report.md<br>action_plan.md</div>
+        </div>
+      </div>
+      <div id="ag-detail" style="flex:1; background:rgba(240,237,230,0.96); border-radius:16px; margin:12px 28px 16px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="padding:20px 28px 16px; border-bottom:1px solid rgba(0,0,0,0.08); display:flex; align-items:center; gap:16px; flex-shrink:0;">
+          <div id="ag-icon" style="width:40px; height:40px; background:rgba(0,0,0,0.06); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🧑‍💻</div>
+          <div>
+            <div id="ag-name" style="font-size:20px; font-weight:700; color:#111; font-family:monospace;">@data-ingestion</div>
+            <div id="ag-subtitle" style="font-size:16px; color:#666; margin-top:2px;">Step 01 · Data Profiling</div>
+          </div>
+        </div>
+        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0; min-height:0;">
+          <div style="padding:20px 24px; border-right:1px solid rgba(0,0,0,0.08); overflow:auto;">
+            <div style="font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:#999; margin-bottom:14px;">역할 · 작업 순서</div>
+            <div id="ag-resp" style="font-size:16px; color:#333; line-height:1.85; display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+          <div style="padding:20px 24px; overflow:auto;">
+            <div style="font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:#999; margin-bottom:14px;">원칙 · 입출력</div>
+            <div id="ag-io" style="font-size:16px; color:#333; line-height:1.85; display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var agents = [
+      {icon:"🧑‍💻",name:"@data-ingestion",subtitle:"Step 01 · Data Profiling",
+        resp:["<b>역할:</b> &ldquo;이 데이터로 무엇을 할 수 있는가&rdquo;를 팀 전체가 같은 이해로 시작하게 만든다. 분석하지 않고 구조를 파악한다.","<b>1단계:</b> input/ 에서 CSV 읽기 — 행/컬럼 수, 각 컬럼 이름·타입·역할 분류","<b>2단계:</b> 데이터 품질 진단 — 결측치 심각도 3단계(5%/20% 기준), 이상치 IQR·3σ 기준, 중복 행","<b>3단계:</b> 전처리 필요성 판단 — 필요한 것만 수행하고 이유 명시, 처리 전후 5행 비교 출력","<b>4단계:</b> 01_dataset_profile.md 저장","<b>입력:</b> <span class='ag-io-tag'>input/*.csv</span>"],
+        io:["<b>출력:</b> <span class='ag-io-tag'>01_dataset_profile.md</span>","<b>원칙:</b> 분석하지 않는다 — 구조와 품질 파악이 전부","<b>원칙:</b> 있는 그대로 보고한다 — 문제를 축소하지 않는다","<b>원칙:</b> 불필요한 전처리는 하지 않는다 — 필요한 것만 처리하고 이유를 밝힌다","<b>model:</b> claude-haiku-4-5  ·  tools: Read, Write, Bash, Glob  ·  permissionMode: auto"]},
+      {icon:"🧑‍🔬",name:"@eda",subtitle:"Step 02 · Exploratory Analysis",
+        resp:["<b>역할:</b> 데이터 안에 어떤 패턴이 있는지 탐색한다. 숫자 나열이 아니라 '왜 중요한가'로 연결되는 패턴을 찾는다.","<b>1단계:</b> 01_dataset_profile.md + CSV 직접 읽기","<b>2단계 일변량:</b> 수치형 — 평균/중앙값/최소/최대/표준편차/분포 형태. 범주형 — 고유값 수, 최빈 범주 Top3","<b>3단계 다변량:</b> 수치↔수치 상관관계, 범주→수치 그룹 비교, 시계열 추세·계절성·변곡점","<b>5단계:</b> 핵심 발견 3개(수치 근거 포함) + 핵심 질문 3~5개 (각 질문이 어떤 결정으로 이어지는지 명시)"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>01_dataset_profile.md</span> + CSV 직접","<b>출력:</b> <span class='ag-io-tag'>02_eda_report.md</span>","<b>원칙:</b> 숫자를 나열하지 않는다 — 패턴을 찾는다","<b>원칙:</b> 절대값과 상대값을 구분해서 쓴다","<b>원칙:</b> 방법론은 데이터에 맞게 선택한다","<b>model:</b> claude-haiku-4-5  ·  tools: Read, Write, Bash, Glob"]},
+      {icon:"🧑‍🏫",name:"@problem",subtitle:"Step 03 · Problem Definition",
+        resp:["<b>역할:</b> EDA가 발견한 패턴을 '우리가 해결해야 할 비즈니스 문제'로 바꾼다.","<b>1단계:</b> 02_eda_report.md 읽기","<b>2단계:</b> 비즈니스 문제 2~3개 정의 (구체적·측정 가능·데이터로 검증 가능). 메인 문제 1개 선정","<b>3단계 MECE:</b> 메인 문제에 대해 4계층 원인 구조 분석","<b>4단계:</b> 핵심 분석 질문 Top3 확정 — 각 질문마다 검증 방법, 의사결정 연결 명시"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>02_eda_report.md</span>","<b>출력:</b> <span class='ag-io-tag'>03_problem_definition.md</span>","<b>원칙:</b> '무엇이 일어났는가'가 아니라 '왜 일어났는가'를 묻는다","<b>원칙:</b> 질문은 반드시 의사결정으로 이어져야 한다","<b>원칙:</b> 원인은 3개 이상, MECE하게","<b>model:</b> claude-haiku-4-5"]},
+      {icon:"🧑‍💼",name:"@metrics",subtitle:"Step 04 · KPI Definition",
+        resp:["<b>역할:</b> '매출'이 아니라 '세금 제외 순매출(월 합계, 전월 대비 증감율 포함)'처럼 모호함을 없앤다.","<b>1단계:</b> 03_problem_definition.md + CSV 컬럼 확인","<b>2단계:</b> 지표 유형 분류 — 결과(Lagging) / 선행(Leading) / 진단 / 파생","<b>3단계:</b> 파생 지표 1개 이상 생성 필수, 선행 지표 1개 이상 필수","<b>4단계:</b> 실제 데이터로 현재값 계산, 비교 기준 설정 후 04_kpi_summary.md 저장"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>03_problem_definition.md</span> + CSV","<b>출력:</b> <span class='ag-io-tag'>04_kpi_summary.md</span>","<b>원칙:</b> KPI 이름은 계산 방식이 드러나도록 구체적으로","<b>원칙:</b> 절대값과 상대값을 절대 혼용하지 않는다","<b>원칙:</b> 선행 지표 + 파생 지표 각 1개 이상 필수","<b>model:</b> claude-haiku-4-5"]},
+      {icon:"👩‍💻",name:"@analysis",subtitle:"Step 05 · Insight Synthesis",
+        resp:["<b>역할:</b> 숫자를 읽는 것이 아니라 변화의 의미를 해석한다. General → Specific 흐름으로 인사이트를 만든다.","<b>1단계:</b> problem_definition + kpi_summary + CSV 직접 읽기","<b>2단계:</b> 각 분석 질문마다 방법론 선택 및 이유 명시","<b>3단계 흐름:</b> 전체 현황 요약 → 주요 분해 → 원인 탐색 → 이상 발견 → 기회 발견","<b>4단계:</b> 핵심 인사이트 3개 이내 + P1/P2/P3 액션 추천"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>problem + kpi_summary</span> + CSV 직접","<b>출력:</b> <span class='ag-io-tag'>05_analysis_report.md</span>","<b>원칙:</b> 절대 변화와 상대 변화를 반드시 구분한다","<b>원칙:</b> 인사이트는 행동으로 이어져야 한다","<b>원칙:</b> General → Specific 흐름을 지킨다","<b>model:</b> claude-haiku-4-5"]},
+      {icon:"🧑‍🎨",name:"@dashboard",subtitle:"Step 06 · Interactive Dashboard",
+        resp:["<b>역할:</b> '예쁜 시각화'가 아니라 '3초 안에 핵심이 읽히는 대시보드'를 만든다.","<b>1단계:</b> dashboard-sample.html + analysis_report + kpi_summary 읽기","<b>2단계:</b> 독자 정의 (임원/실무자/혼합). 탭 구조 설계 (2~5개)","<b>3단계 필수:</b> KPI 카드 3~5개 최상단, 추세 차트, 비교 차트, 스토리 블록, 액션 아이템 3개 이상","<b>4단계:</b> 06_dashboard.html 저장"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>dashboard-sample.html + analysis + kpi</span>","<b>출력:</b> <span class='ag-io-tag'>06_dashboard.html</span>","<b>원칙:</b> KPI 수치에 색상 절대 금지 — #0a0a0a 검정 고정","<b>원칙:</b> 순수 SVG/Canvas — CDN 라이브러리(Chart.js, D3 등) 금지","<b>원칙:</b> 차트 제목은 질문형/결론형","<b>model:</b> claude-sonnet-4-6  ·  skills: visualize + dashboard-design"]},
+      {icon:"👩‍💼",name:"@report",subtitle:"Step 07 · Executive Report",
+        resp:["<b>역할:</b> 분석 팀의 모든 작업을 임원이 5분 안에 읽을 수 있는 보고서로 압축한다.","<b>1단계:</b> analysis_report + kpi_summary + problem_definition + 06_dashboard.html 읽기","<b>2단계:</b> 대시보드 품질 3관점 검토 — 임원/실무자/데이터 신뢰성","<b>3단계:</b> Executive Summary 자기완결 작성 — 문제/발견/판단/액션","<b>4단계:</b> P1 즉시 / P2 2~4주 / P3 모니터링 우선순위 액션 플랜"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>analysis + kpi + problem + 06_dashboard.html</span>","<b>출력:</b> <span class='ag-io-tag'>07_executive_report.md</span>","<b>원칙:</b> 임원은 맥락을 모른다 — 자기완결적으로 쓴다","<b>원칙:</b> 발견이 아니라 결정으로 끝난다","<b>원칙:</b> 임원 관점과 실무자 관점을 모두 커버한다","<b>model:</b> claude-haiku-4-5"]}
+    ];
+    var cardBorderColors = ['#b0afa8','#b8a8dd','#d8a8b8','#c8b870','#7acc9a','#b0a8dd','#70bba8'];
+    var cardBgColors = ['#f0f0ef','#ede8f5','#f5e8ea','#f5f0e0','#e8f0ec','#ebe8f5','#e5f2ee'];
+    window.selectAgent = function(i) {
+      document.querySelectorAll('.ag-card').forEach(function(c,j){
+        var isActive = j===i;
+        c.classList.toggle('ag-card-active', isActive);
+        c.style.borderColor = isActive ? cardBorderColors[j] : 'transparent';
+        c.style.boxShadow = isActive ? '0 2px 12px rgba(0,0,0,0.12)' : 'none';
+      });
+      document.getElementById('ag-detail').style.background = cardBgColors[i];
+      var a = agents[i];
+      document.getElementById('ag-icon').textContent = a.icon;
+      document.getElementById('ag-name').textContent = a.name;
+      document.getElementById('ag-subtitle').textContent = a.subtitle;
+      document.getElementById('ag-resp').innerHTML = a.resp.map(function(r){
+        if(r.startsWith('<b>역할:</b>')) return '<div style="font-size:16px;color:#222;line-height:1.75;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid rgba(0,0,0,0.08);">'+r+'</div>';
+        if(r.match(/^<b>\d단계/)) return '<div style="font-size:18px;color:#333;line-height:1.7;display:flex;gap:8px;align-items:flex-start;"><span style="flex-shrink:0;width:16px;height:16px;background:rgba(0,0,0,0.07);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#666;margin-top:3px;">·</span><span>'+r+'</span></div>';
+        return '<div style="font-size:18px;color:#444;line-height:1.7;">'+r+'</div>';
+      }).join('');
+      document.getElementById('ag-io').innerHTML = a.io.map(function(r){
+        if(r.startsWith('<b>model:</b>')) return '<div style="font-size:16px;color:#999;line-height:1.8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);">'+r+'</div>';
+        if(r.startsWith('<b>원칙:</b>')) return '<div style="font-size:18px;color:#333;line-height:1.7;display:flex;gap:6px;"><span style="color:rgba(0,0,0,0.25);flex-shrink:0;">—</span><span>'+r.replace('<b>원칙:</b> ','')+'</span></div>';
+        return '<div style="font-size:18px;color:#333;line-height:1.8;font-weight:500;">'+r+'</div>';
+      }).join('');
+    };
+    setTimeout(function(){ window.selectAgent(0); }, 100);
+  })();
+  </script>
+
+  <!-- ════ 에이전트 개별 슬라이드 (1-7) ════ -->
+
+  <!-- @data-ingestion -->
+  <div class="slide" id="s-ag1">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @data-ingestion</span><span class="tb-num">Step 1 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 01 · 파이프라인 첫 번째</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@data-<br>ingestion</div>
+          <div class="body-text" style="margin-bottom:24px;">"이 데이터로 무엇을 할 수 있는가"를<br>팀 전체가 같은 이해로 시작하게 만든다.<br>분석하지 않고 구조를 파악한다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">CSV · TSV · Excel<br>JSON · PDF 자동 감지</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">runs/latest/input/</span> 데이터 파일 (형식 자동 감지)<br>구분자 자동 인식 · Excel 시트 판단 · JSON 평탄화 · PDF 텍스트 추출</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">컬럼별 타입·역할·결측치 비율 표 · 이상치·중복·형식 이슈 심각도<br><span style="color:rgba(28,26,24,0.66);font-size:16px;">결측치: 5% 이하 무시 가능 / 5~20% 처리 제안 / 20% 초과 경고</span><br><span class="ag-io-tag">01_dataset_profile.md</span> + @eda 전달 주의사항</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">분석하지 않는다 — 구조와 품질 파악이 전부다.<br>있는 그대로 보고한다 — 문제를 축소하지 않는다.<br>불필요한 전처리는 하지 않는다 — 필요한 것만, 이유를 밝힌다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @eda -->
+  <div class="slide" id="s-ag2">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @eda</span><span class="tb-num">Step 2 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 02 · 탐색적 데이터 분석</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@eda</div>
+          <div class="body-text" style="margin-bottom:24px;">숫자를 나열하는 것이 아니라<br>"왜 중요한가"로 연결되는 패턴을 찾는다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">일변량 → 다변량 → 시계열<br>방법론 후보 → 핵심 질문</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">01_dataset_profile.md</span> + 원본 CSV 직접 읽기</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">일변량: 분포·평균·극단값 / 범주형: 최빈 범주 Top3<br>다변량: 상관관계·그룹 비교·시계열 추세·계절성<br>분석 방법론 후보 + 핵심 발견 3개(수치 근거) + 분석 질문 3~5개<br><span class="ag-io-tag">02_eda_report.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">숫자를 나열하지 않는다 — 패턴을 찾는다.<br>도메인 고정 가정 금지 — 커머스 방법론을 통신 데이터에 강제하지 않는다.<br>방법론은 데이터가 보여주는 것을 따른다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @problem -->
+  <div class="slide" id="s-ag3">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @problem</span><span class="tb-num">Step 3 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 03 · 비즈니스 문제 정의</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@problem</div>
+          <div class="body-text" style="margin-bottom:24px;">EDA가 발견한 패턴을<br>"우리가 해결해야 할 비즈니스 문제"로 바꾼다.<br>좋은 문제 정의는 분석 방향을 결정한다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">문제 정의 → MECE 원인 구조<br>→ 핵심 질문 Top 3</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">02_eda_report.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">측정 가능한 비즈니스 문제 2~3개 (수치·기간 포함)<br>MECE 4계층 구조: 문제 → 원인 → 원인의 원인 → 해결방안 → 목표 지표<br>핵심 분석 질문 Top3 (검증 방법 + 의사결정 연결 + 성공 기준)<br><span class="ag-io-tag">03_problem_definition.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">"무엇이 일어났는가"가 아니라 "왜 일어났는가"를 묻는다.<br>질문은 반드시 의사결정으로 이어져야 한다.<br>원인은 3개 이상, MECE하게.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @metrics -->
+  <div class="slide" id="s-ag4">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @metrics</span><span class="tb-num">Step 4 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 04 · KPI 정의</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@metrics</div>
+          <div class="body-text" style="margin-bottom:24px;">"매출"이 아니라<br>"세금 제외 순매출(월 합계, 전월 대비 증감율)"처럼<br>모호함을 없앤다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">결과 / 선행 / 진단 / 파생<br>선행 지표 1개 이상 필수</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">03_problem_definition.md</span> + 원본 CSV 컬럼 확인</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">KPI 목록 (결과·선행·진단·파생 유형 분류)<br>각 KPI: 계산식 + 단위 + 현재값 + 비교 기준 + 액션 가이드<br>파생 지표 1개 이상 필수 생성<br><span class="ag-io-tag">04_kpi_summary.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">선행 지표를 반드시 1개 이상 포함한다 — 결과 지표만 있으면 너무 늦게 안다.<br>절대값과 상대값을 절대 혼용하지 않는다.<br>표본이 작으면 반드시 경고한다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @analysis -->
+  <div class="slide" id="s-ag5">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @analysis</span><span class="tb-num">Step 5 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 05 · 인사이트 해석</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@analysis</div>
+          <div class="body-text" style="margin-bottom:24px;">숫자를 읽는 것이 아니라 변화의 의미를 해석한다.<br>General → Specific 흐름으로 대시보드와<br>보고서에 실을 수 있는 인사이트를 만든다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">전체 현황 → 분해 → 원인 탐색<br>→ 이상 발견 → 기회 발견</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">03_problem_definition.md</span> + <span class="ag-io-tag">04_kpi_summary.md</span> + 원본 CSV (필요 시)</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">핵심 인사이트 3개 이내 (발견·근거·임팩트·한계)<br>추천 액션: P1 즉시 / P2 2~4주 / P3 모니터링<br>대시보드용 한 줄 메시지<br><span class="ag-io-tag">05_analysis_report.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">추측은 추측이라고 밝힌다 — "~로 보인다"와 "~이다"를 구분한다.<br>인사이트는 행동으로 이어져야 한다.<br>General → Specific 흐름을 지킨다 — 세부 분석부터 시작하지 않는다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @dashboard -->
+  <div class="slide" id="s-ag6">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @dashboard</span><span class="tb-num">Step 6 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 06 · 인터랙티브 대시보드 제작</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@dashboard</div>
+          <div class="body-text" style="margin-bottom:24px;">"예쁜 시각화"가 아니라<br>"3초 안에 핵심이 읽히는 대시보드"를 만든다.<br>보는 사람이 바로 무엇을 해야 할지 알 수 있어야 한다.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#efb05d;flex-shrink:0;"></span>claude-sonnet-4-6</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">유일하게 Sonnet 사용<br>복잡한 HTML 코드 품질 때문</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;"><span class="ag-io-tag">dashboard-sample.html</span> 베이스 템플릿 + <span class="ag-io-tag">05_analysis_report.md</span> + <span class="ag-io-tag">04_kpi_summary.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">KPI 카드 + 추세 차트 + 비교 차트 + 스토리 블록 (현황→원인→결과→기회)<br>탭 구조 (임원 Overview + 실무자 세부) + 시나리오 시뮬레이터<br>순수 SVG/Canvas — CDN 라이브러리 없음<br><span class="ag-io-tag">06_dashboard.html</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">차트 제목은 질문형/결론형 — "매출 현황"이 아니라 "왜 마진이 4배 낮은가?"<br>KPI 수치에 색상 절대 금지 — #0a0a0a 검정 고정.<br>데이터가 다르면 대시보드 구조도 달라진다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @report -->
+  <div class="slide" id="s-ag7">
+    <div class="tb"><span class="tb-cap">Part 2 · 에이전트 상세 — @report</span><span class="tb-num">Step 7 / 7</span></div>
+    <div class="body" style="padding:0;">
+      <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div class="eyebrow">STEP 07 · 임원 보고서 작성</div>
+          <div style="font-size:clamp(30px,3.2vw,46px); font-weight:300; color:#1C1A18; line-height:1.15; letter-spacing:-0.03em; margin-bottom:16px; font-family:monospace;">@report</div>
+          <div class="body-text" style="margin-bottom:24px;">분석 팀의 모든 작업을<br>임원이 5분 안에 읽을 수 있는 보고서로 압축한다.<br>"무엇을 발견했는가"보다 "무엇을 해야 하는가"가 중심.</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(28,26,24,0.05);border:1px solid rgba(28,26,24,0.1);border-radius:5px;padding:5px 12px;font-size:18px;font-family:monospace;color:rgba(28,26,24,0.70);"><span style="width:6px;height:6px;border-radius:50%;background:#8ABFA8;flex-shrink:0;"></span>claude-haiku-4-5</div>
+        </div>
+        <div style="font-size:18px;color:rgba(28,26,24,0.76);font-family:monospace;line-height:2;">임원 / 실무자 / 데이터 신뢰성<br>3관점 품질 검토 포함</div>
+      </div>
+      <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">읽는 것 — Input</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">파이프라인 전체 산출물 5개 파일 (<span class="ag-io-tag">03 · 04 · 05 · 06</span>)<br>대시보드 품질 3관점 검토: 임원 · 실무자 · 데이터 신뢰성</div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">만드는 것 — Output</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;">한 줄 요약 + 핵심 KPI 현황 (✅양호 / ⚠경고 / ❌위험)<br>주요 발견 3개 (수치 + 임팩트) + 액션 플랜 테이블<br>대시보드 품질 검토 체크리스트<br><span class="ag-io-tag">07_executive_report.md</span></div>
+        </div>
+        <div style="background:rgba(28,26,24,0.04); border-radius:14px; padding:20px 22px;">
+          <div style="font-size:16px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(28,26,24,0.58);margin-bottom:12px;">핵심 원칙</div>
+          <div style="font-size:18px;color:#C0C8D0;line-height:1.85;border-left:2px solid var(--border);padding-left:14px;">임원은 맥락을 모른다 — 자기완결적으로 쓴다.<br>발견이 아니라 결정으로 끝난다.<br>수치는 단위와 기준을 항상 붙인다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ 스킬 카드 ════ -->
+  <div class="slide" id="s_skills">
+    <div class="tb"><span class="tb-cap">Part 2 — 에이전트 vs 스킬</span><span class="tb-num">— — —</span></div>
+    <div class="body" style="flex-direction:column; min-height:0; background:#0d0d0d;">
+      <div style="display:flex; gap:16px; padding:24px 28px 18px; flex-shrink:0; border-bottom:1px solid rgba(28,26,24,0.07);">
+        <div id="sk-card-0" onclick="selectSkill(0)" class="sk-card sk-card-active" style="flex:1; background:#f0f0ef; border:2px solid #c8c7c0; border-radius:12px; padding:18px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:18px; margin-bottom:8px; color:#111;">▣</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#999; margin-bottom:4px;">USER COMMAND</div>
+          <div style="font-size:16px; font-weight:700; color:#222; font-family:monospace; margin-bottom:8px;">/run-pipeline</div>
+          <div style="font-size:9px; color:#888; margin-bottom:8px;">7단계 순차 실행</div>
+          <div style="font-size:9px; color:#555; line-height:1.6;">체크포인트 내장<br>중단/재개 가능</div>
+        </div>
+        <div id="sk-card-1" onclick="selectSkill(1)" class="sk-card" style="flex:1; background:#e5f2ee; border:2px solid transparent; border-radius:12px; padding:18px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:18px; margin-bottom:8px; color:#0a2e28;">⌘</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#60a898; margin-bottom:4px;">@dashboard 전용</div>
+          <div style="font-size:16px; font-weight:700; color:#0a2e28; font-family:monospace; margin-bottom:8px;">dashboard-design</div>
+          <div style="font-size:9px; color:#60a898; margin-bottom:8px;">컴포넌트 스펙</div>
+          <div style="font-size:9px; color:#1a5548; line-height:1.6;">색상·타이포·레이아웃<br>SVG 차트 패턴</div>
+        </div>
+        <div id="sk-card-2" onclick="selectSkill(2)" class="sk-card" style="flex:1; background:#e5f2ee; border:2px solid transparent; border-radius:12px; padding:18px 16px; cursor:pointer; transition:all .2s;">
+          <div style="font-size:18px; margin-bottom:8px; color:#0a2e28;">≡</div>
+          <div style="font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#60a898; margin-bottom:4px;">@dashboard 전용</div>
+          <div style="font-size:16px; font-weight:700; color:#0a2e28; font-family:monospace; margin-bottom:8px;">visualize</div>
+          <div style="font-size:9px; color:#60a898; margin-bottom:8px;">차트 제작 가이드</div>
+          <div style="font-size:9px; color:#1a5548; line-height:1.6;">독자 정의 → 기획<br>차트 선택 원칙</div>
+        </div>
+      </div>
+      <div id="sk-detail" style="flex:1; background:rgba(240,237,230,0.96); border-radius:16px; margin:12px 28px 16px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="padding:20px 28px 16px; border-bottom:1px solid rgba(0,0,0,0.08); display:flex; align-items:center; gap:16px; flex-shrink:0;">
+          <div id="sk-icon" style="width:40px; height:40px; background:rgba(0,0,0,0.06); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">▣</div>
+          <div>
+            <div id="sk-name" style="font-size:20px; font-weight:700; color:#111; font-family:monospace;">/run-pipeline</div>
+            <div id="sk-subtitle" style="font-size:16px; color:#666; margin-top:2px;">User Command · 파이프라인 실행기</div>
+          </div>
+        </div>
+        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0; min-height:0;">
+          <div style="padding:20px 24px; border-right:1px solid rgba(0,0,0,0.08); overflow:auto;">
+            <div style="font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:#999; margin-bottom:14px;">하는 일</div>
+            <div id="sk-resp" style="font-size:16px; color:#333; line-height:1.85; display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+          <div style="padding:20px 24px; overflow:auto;">
+            <div style="font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:#999; margin-bottom:14px;">원칙 · 설정</div>
+            <div id="sk-io" style="font-size:16px; color:#333; line-height:1.85; display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var skills = [
+      {icon:"▣",name:"/run-pipeline",subtitle:"User Command · 파이프라인 실행기",bg:"#f0f0ef",
+        resp:["<b>역할:</b> 사용자가 직접 실행하는 7단계 파이프라인 커맨드. CSV를 넣고 /run-pipeline 하면 7개 에이전트를 순서대로 호출해 최종 대시보드와 보고서까지 생성.","<b>실행 전:</b> input/ 에 CSV 확인 → 없으면 즉시 중단","<b>체크포인트:</b> 각 단계 실행 전, 산출물이 새것이면 skip — 중간에 멈춰도 이어서 실행 가능","<b>실패 처리:</b> 산출물 파일 없으면 해당 단계 실패 보고 후 중단"],
+        io:["<b>입력:</b> <span class='ag-io-tag'>input/*.csv</span>","<b>출력:</b> <span class='ag-io-tag'>01_dataset_profile.md ~ 07_executive_report.md</span>","<b>원칙:</b> 반드시 순서대로 — 병렬 실행 없음","<b>원칙:</b> 이전 단계 파일 없으면 다음 단계 시작 안 함","<b>tools:</b> Read, Write, Bash, Glob, Agent"]},
+      {icon:"⌘",name:"dashboard-design",subtitle:"@dashboard 전용 · 컴포넌트 스펙",bg:"#e5f2ee",
+        resp:["<b>역할:</b> 대시보드 디자인 시스템. 동일한 외관의 대시보드를 재현하거나 확장할 때 @dashboard가 참조.","<b>색상:</b> --offwhite · --lavender · --mint · --rose · --cream · --beige 6개 카드 팔레트","<b>포인트색:</b> --acc: #4fb799 (슬라이더·탭 활성), --dk: #2f2b27 (주텍스트)","<b>금지:</b> KPI 수치에 색상 절대 금지, border-left 단독 테두리 금지, CDN 라이브러리 금지"],
+        io:["<b>참조 에이전트:</b> <span class='ag-io-tag'>@dashboard</span> 전용","<b>원칙:</b> 순수 SVG/Canvas만 — Chart.js·D3 금지","<b>원칙:</b> 차트 제목은 질문형/결론형","<b>tools:</b> Read, Glob, Grep, Write, Bash"]},
+      {icon:"≡",name:"visualize",subtitle:"@dashboard 전용 · 차트 제작 가이드",bg:"#e5f2ee",
+        resp:["<b>역할:</b> 분석 인사이트를 받아 질문에 맞는 차트와 레이아웃을 기획. 독자 정의 → 와이어프레임 → 디자인 순서를 반드시 지킨다.","<b>1단계:</b> 독자(의사결정자) 정의","<b>2단계:</b> 와이어프레임 텍스트로 먼저 기획","<b>3단계:</b> 질문에 맞는 차트 선택 + 근거 제시 → HTML 대시보드 제작"],
+        io:["<b>참조 에이전트:</b> <span class='ag-io-tag'>@dashboard</span> 전용","<b>원칙:</b> 추세를 보여줄 때만 line 차트","<b>원칙:</b> 범주 비교는 정렬된 bar 우선","<b>원칙:</b> 복잡한 차트는 해석 비용 < 얻는 가치일 때만","<b>tools:</b> Read, Glob, Grep, Write, Bash"]}
+    ];
+    var skBorderColors = ['#c8c7c0','#70bba8','#70bba8'];
+    var skBgColors = ['#f0f0ef','#e5f2ee','#e5f2ee'];
+    window.selectSkill = function(i) {
+      document.querySelectorAll('.sk-card').forEach(function(c,j){
+        var isActive = j===i;
+        c.classList.toggle('sk-card-active', isActive);
+        c.style.borderColor = isActive ? skBorderColors[j] : 'transparent';
+        c.style.boxShadow = isActive ? '0 2px 12px rgba(0,0,0,0.12)' : 'none';
+      });
+      document.getElementById('sk-detail').style.background = skBgColors[i];
+      var s = skills[i];
+      document.getElementById('sk-icon').textContent = s.icon;
+      document.getElementById('sk-name').textContent = s.name;
+      document.getElementById('sk-subtitle').textContent = s.subtitle;
+      document.getElementById('sk-resp').innerHTML = s.resp.map(function(r){
+        if(r.startsWith('<b>역할:</b>')) return '<div style="font-size:16px;color:#222;line-height:1.75;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid rgba(0,0,0,0.08);">'+r+'</div>';
+        if(r.match(/^<b>\d단계/)) return '<div style="font-size:18px;color:#333;line-height:1.7;display:flex;gap:8px;align-items:flex-start;"><span style="flex-shrink:0;width:16px;height:16px;background:rgba(0,0,0,0.07);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#666;margin-top:3px;">·</span><span>'+r+'</span></div>';
+        return '<div style="font-size:18px;color:#444;line-height:1.7;">'+r+'</div>';
+      }).join('');
+      document.getElementById('sk-io').innerHTML = s.io.map(function(r){
+        if(r.startsWith('<b>tools:</b>')) return '<div style="font-size:16px;color:#999;line-height:1.8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);">'+r+'</div>';
+        if(r.startsWith('<b>원칙:</b>')) return '<div style="font-size:18px;color:#333;line-height:1.7;display:flex;gap:6px;"><span style="color:rgba(0,0,0,0.25);flex-shrink:0;">—</span><span>'+r.replace('<b>원칙:</b> ','')+'</span></div>';
+        return '<div style="font-size:18px;color:#333;line-height:1.8;font-weight:500;">'+r+'</div>';
+      }).join('');
+    };
+    setTimeout(function(){ window.selectSkill(0); }, 150);
+  })();
+  </script>
+
+<!-- ════ 시행착오 ════ -->
+<div class="slide" id="s-fail">
+  <div class="tb"><span class="tb-cap">Part 2 · 2-3 — 파이프라인 만들며 겪은 것들</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:0;">
+    <div style="width:38%; border-right:1px solid var(--border); padding:52px 40px 52px 52px; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div class="eyebrow">시행착오</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); line-height:1.35; margin-bottom:20px;">실패하면서<br>배운 것들</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.66); line-height:1.8;">지금 운용 방식은<br>이 실패들의 결과입니다</div>
+      </div>
+    </div>
+    <div style="flex:1; padding:40px 52px 40px 48px; display:flex; flex-direction:column; gap:12px; justify-content:center;">
+      <div style="background:rgba(239,125,134,0.06); border:1px solid rgba(239,125,134,0.15); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#C4927A; letter-spacing:0.12em; flex-shrink:0;">FAIL 01</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">컨텍스트 폭발</span></div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); margin-bottom:10px; padding-left:28px;">CSV 원본 + 분석 결과 + 대화 내용이 한 세션에 쌓이면서 앞 내용이 잘리기 시작함</div>
+        <div style="display:flex; gap:8px; padding-left:28px; align-items:flex-start;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; flex-shrink:0; padding-top:2px;">→ 해결</span><span style="font-size:18px; color:rgba(28,26,24,0.65); line-height:1.65;">7개 에이전트로 분리 — 각 단계가 자기에게 필요한 파일만 새 컨텍스트에서 읽는 구조</span></div>
+      </div>
+      <div style="background:rgba(239,125,134,0.06); border:1px solid rgba(239,125,134,0.15); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#C4927A; letter-spacing:0.12em; flex-shrink:0;">FAIL 02</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">에이전트 간 데이터 전달 실패</span></div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); margin-bottom:10px; padding-left:28px;">이전 에이전트가 만든 결과를 다음 에이전트가 찾지 못하거나 형식이 달라서 오류 발생</div>
+        <div style="display:flex; gap:8px; padding-left:28px; align-items:flex-start;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; flex-shrink:0; padding-top:2px;">→ 해결</span><span style="font-size:18px; color:rgba(28,26,24,0.65); line-height:1.65;">파일 기반 핸드오프 — 각 에이전트는 정해진 파일명으로 저장, 다음 에이전트는 그 파일을 명시적으로 읽음</span></div>
+      </div>
+      <div style="background:rgba(239,125,134,0.06); border:1px solid rgba(239,125,134,0.15); border-radius:14px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:16px; font-weight:700; color:#C4927A; letter-spacing:0.12em; flex-shrink:0;">FAIL 03</span><span style="font-size:18px; font-weight:700; color:#1C1A18; line-height:1.4;">재현성 문제 — 같은 데이터, 다른 결과</span></div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.74); margin-bottom:10px; padding-left:28px;">같은 CSV를 넣어도 실행할 때마다 결과가 달라지고, 중간에 실패하면 어디서부터 재실행해야 할지 불명확</div>
+        <div style="display:flex; gap:8px; padding-left:28px; align-items:flex-start;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; flex-shrink:0; padding-top:2px;">→ 해결</span><span style="font-size:18px; color:rgba(28,26,24,0.65); line-height:1.65;">.run_id 체크포인트 — 완료된 단계는 자동으로 건너뜀, 실패한 단계부터 재시작</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token Section Cover ════ -->
+<div class="slide" id="s-dt-cover">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 2 · 2-4 — Design System</div>
+    <div class="sec-title" style="font-size:clamp(34px,4.8vw,64px); font-weight:300; letter-spacing:-0.02em;">Design Token</div>
+    <div class="sec-sub" style="font-size:16px;">색상·폰트·간격을 이름 붙인 변수<br>— 하나 바꾸면 전체가 바뀌는 구조</div>
+    <div style="margin-top:44px; display:flex; gap:20px;">
+      <div style="border:1px solid rgba(175,152,110,0.3); background:rgba(175,152,110,0.07); padding:22px 28px; text-align:left; min-width:230px; border-radius:10px;">
+        <div style="font-size:18px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(175,152,110,0.7); margin-bottom:12px; font-family:monospace;">이 섹션에서 다루는 것</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.65); line-height:2.1;">토큰 방식의 장단점<br>일반인을 위한 설계 방법<br>참고 사이트 5개</div>
+      </div>
+      <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.07); padding:22px 28px; text-align:left; min-width:230px; border-radius:10px;">
+        <div style="font-size:18px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(122,176,204,0.7); margin-bottom:12px; font-family:monospace;">실무 사례</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.65); line-height:2.1;">Anthropic 내부 AI 분석 시스템<br>정확도 21% → 95% 달성 방법<br>팀에서 바로 쓸 수 있는 팁 3가지</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CLAUDE.md vs Design Token 비교 ════ -->
+<div class="slide" id="s-dt-compare">
+  <div class="tb"><span class="tb-cap">Part 2 · Design System — CLAUDE.md vs Design Token</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <!-- CLAUDE.md 방식 -->
+    <div style="flex:1; border-right:1px solid var(--border); padding:28px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(175,152,110,0.9); font-family:monospace; margin-bottom:6px;">방법 A — CLAUDE.md</div>
+        <div style="font-size:20px; font-weight:300; color:#1C1A18; letter-spacing:-0.01em;">자연어로 디자인 규칙을 설명</div>
+      </div>
+      <div class="code-wrap" style="font-size:13px; line-height:1.75; padding:14px 16px; white-space:pre-wrap;"><span style="color:rgba(28,26,24,0.40);"># CLAUDE.md</span>
+색상은 KT 빨간색을 메인으로 사용해줘.
+폰트는 Pretendard, 본문은 읽기 좋게
+넉넉한 줄간격으로 해줘.
+카드는 흰색 배경에 그림자 약하게...</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(175,152,110,0.7); font-family:monospace;">AI 토큰 비용 (세션당)</div>
+        <div style="display:flex; gap:3px; align-items:center;">
+          <div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div>
+          <span style="font-size:12px; color:rgba(196,146,122,0.9); font-family:monospace; margin-left:8px;">높음 — 파일이 길수록 선형 증가</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.40); font-family:monospace;">주요 단점</div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">매 세션 전체 로드</strong> — CLAUDE.md는 모든 대화 시작마다 컨텍스트에 올라감. 파일이 길수록 비용 증가.</div>
+        </div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">자연어 해석 차이</strong> — "넉넉하게", "약하게"의 기준이 세션마다 달라짐. 일관성 보장 불가.</div>
+        </div>
+        <div style="border:1px solid rgba(122,155,130,0.3); background:rgba(122,155,130,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#8ABFA8; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">빠른 시작</strong> — 코드 없이 텍스트만으로 즉시 작성. 작은 프로젝트엔 여전히 유효.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Design Token 방식 -->
+    <div style="flex:1; padding:28px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(122,176,204,0.9); font-family:monospace; margin-bottom:6px;">방법 B — Design Token</div>
+        <div style="font-size:20px; font-weight:300; color:#1C1A18; letter-spacing:-0.01em;">수치를 코드 변수로 직접 정의</div>
+      </div>
+      <div class="code-wrap" style="font-size:13px; line-height:1.75; padding:14px 16px; white-space:pre-wrap;"><span style="color:rgba(28,26,24,0.40);">// theme.js — AI가 이 파일만 참조</span>
+primary:      <span style="color:rgba(122,176,204,0.9);">'#E8000D'</span>
+background:   <span style="color:rgba(122,176,204,0.9);">'#F7F5F2'</span>
+fontFamily:   <span style="color:rgba(122,176,204,0.9);">'Pretendard'</span>
+lineHeight:   <span style="color:rgba(122,176,204,0.9);">1.8</span>
+borderRadius: <span style="color:rgba(122,176,204,0.9);">0</span></div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,176,204,0.7); font-family:monospace;">AI 토큰 비용 (세션당)</div>
+        <div style="display:flex; gap:3px; align-items:center;">
+          <div style="height:7px; width:11px; background:rgba(122,176,204,0.85);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.85);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div>
+          <span style="font-size:12px; color:rgba(122,176,204,0.9); font-family:monospace; margin-left:8px;">낮음 — 파일 크기 일정 유지</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.40); font-family:monospace;">장점 / 단점</div>
+        <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#7AB0CC; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">토큰 소비 극소화</strong> — 자연어 설명 없이 코드로 직접 참조. AI가 "읽을" 필요 없음.</div>
+        </div>
+        <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#7AB0CC; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">100% 일관성</strong> — 같은 변수 참조 = 항상 같은 결과. 해석 차이 없음.</div>
+        </div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">초기 세팅 필요</strong> — 처음 한 번은 토큰 구조를 잡아야 함. 다음 슬라이드에서 프롬프트로 해결.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 장단점 ════ -->
+<div class="slide" id="s-dt1">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 장단점</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <!-- 장점 -->
+    <div style="flex:1; border-right:1px solid var(--border); padding:44px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-size:16px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(122,155,130,0.9); margin-bottom:4px; font-family:monospace;">장점 · Pros</div>
+      <div style="font-size:22px; font-weight:300; color:#1C1A18; margin-bottom:10px; letter-spacing:-0.01em;">바꾸기 쉬워지는 이유</div>
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:6px;">일관성</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">한 곳만 바꾸면 전체 적용</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">Primary 색상 하나가 버튼·헤더·뱃지 모두에 연결. 브랜드 색상 변경 시 한 줄로 끝.</div>
+      </div>
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:6px;">테마 전환</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">다크모드·브랜드 교체 즉시 반영</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">MUI <code style="font-family:monospace; font-size:16px; background:#E4E1DC; padding:1px 6px; border-radius:3px;">createTheme()</code>으로 테마만 교체하면 전체 UI가 한 번에 바뀜.</div>
+      </div>
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:6px;">협업</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">디자이너 · 개발자 공통 언어</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">"Primary Blue"라는 이름을 공유. 디자인 파일과 코드가 같은 이름으로 동기화.</div>
+      </div>
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:6px;">유지보수</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">하드코딩 찾아다닐 필요 없음</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">코드 전체를 검색하지 않아도 됨. 값이 어디에 쓰이는지 즉시 파악 가능.</div>
+      </div>
+    </div>
+    <!-- 단점 -->
+    <div style="flex:1; padding:44px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-size:16px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(184,160,112,0.9); margin-bottom:4px; font-family:monospace;">단점 · Cons</div>
+      <div style="font-size:22px; font-weight:300; color:#1C1A18; margin-bottom:10px; letter-spacing:-0.01em;">감수해야 하는 비용</div>
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:6px;">설계 비용</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">처음에 체계 잡는 시간 필요</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">어떤 단위까지 토큰화할지 결정해야 함. 너무 세밀하면 오히려 관리 부담 증가.</div>
+      </div>
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:6px;">학습 곡선</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">팀 전체가 체계를 이해해야 함</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">토큰 이름만 보고 어떤 색인지 바로 알아야 함. 팀 온보딩 문서 필요.</div>
+      </div>
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:6px;">추상화 위험</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:5px;">잘못 설계하면 오히려 복잡</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.5); line-height:1.7;">토큰이 너무 많거나 계층이 깊어지면 어떤 값이 어디서 오는지 추적 어려움.</div>
+      </div>
+      <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:auto;">
+        <div style="font-size:16px; color:rgba(28,26,24,0.70); line-height:1.8;">결론 — 3개 이상 페이지를 만드는 서비스라면<br>설계 비용을 감수할 가치가 있음</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 코드 비교 ════ -->
+<div class="slide" id="s-dt2">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 코드 비교</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:28px 52px 32px; flex-direction:column; gap:16px;">
+    <div>
+      <div class="eyebrow">Before / After</div>
+      <div class="big-title" style="font-size:42px; margin-bottom:0;">하드코딩 vs 토큰</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex:1;">
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:16px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace;">❌ 하드코딩 — 수정 시 4곳 모두 변경</div>
+        <div class="code-wrap" style="flex:1; border-radius:10px; font-size:18px; line-height:1.8;"><span style="color:rgba(28,26,24,0.60);">/* 브랜드 색상을 #0057B7로 바꾸려면? */</span>
+
+<span style="color:rgba(28,26,24,0.60);">/* 버튼 */</span>
+.button {
+  background: <span style="color:rgba(184,160,112,0.9);">#C8001A</span>;
+}
+<span style="color:rgba(28,26,24,0.60);">/* 헤더 */</span>
+.header {
+  border-bottom: 3px solid <span style="color:rgba(184,160,112,0.9);">#C8001A</span>;
+}
+<span style="color:rgba(28,26,24,0.60);">/* 뱃지 */</span>
+.badge {
+  color: <span style="color:rgba(184,160,112,0.9);">#C8001A</span>;
+  border: 1px solid <span style="color:rgba(184,160,112,0.9);">#C8001A</span>;
+}
+
+<span style="color:rgba(28,26,24,0.60);">/* → 4곳을 일일이 찾아서 바꿔야 함
+   파일 많을수록 누락 위험 ↑  */</span></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:16px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(122,176,204,0.9); font-family:monospace;">✅ Design Token — 한 곳만 바꾸면 끝</div>
+        <div class="code-wrap" style="flex:1; border-radius:10px; font-size:18px; line-height:1.8;"><span style="color:rgba(28,26,24,0.60);">/* 토큰 정의 — 딱 한 곳에서만 */</span>
+const theme = createTheme({
+  palette: {
+    primary: { main: <span style="color:rgba(122,176,204,0.9);">'#C8001A'</span> }
+    <span style="color:rgba(28,26,24,0.60);">↑ 여기 하나만 바꾸면</span>
+  }
+})
+
+<span style="color:rgba(28,26,24,0.60);">/* 버튼 · 헤더 · 뱃지 모두
+   theme.palette.primary.main 참조 */</span>
+
+&lt;Button color=<span style="color:rgba(122,176,204,0.9);">"primary"</span>&gt;...&lt;/Button&gt;
+
+sx={{ borderColor: <span style="color:rgba(122,176,204,0.9);">'primary.main'</span> }}
+sx={{ color: <span style="color:rgba(122,176,204,0.9);">'primary.main'</span> }}
+
+<span style="color:rgba(28,26,24,0.60);">/* → 전체 자동 업데이트
+   누락 없음, 실수 없음 */</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 설계 방법 ════ -->
+<div class="slide" id="s-dt3">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 설계 방법</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:32px 52px 32px; flex-direction:column; gap:16px;">
+    <div>
+      <div class="eyebrow">처음 설계하는 사람을 위한 3단계</div>
+      <div class="big-title" style="font-size:42px; margin-bottom:0;">색상만 먼저, 나머지는 나중에</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; flex:1; align-content:start;">
+      <div style="border:1px solid var(--border); border-radius:10px; padding:26px 22px; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:44px; font-weight:800; color:rgba(28,26,24,0.07); letter-spacing:-0.04em; line-height:1;">01</div>
+        <div style="font-size:19px; font-weight:600; color:#1C1A18;">색상 4가지만 정의</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.75;">Primary · Background · Text · Error<br>이 4가지로 대부분의 UI 커버 가능</div>
+        <div class="code-wrap" style="font-size:18px; padding:13px 15px; border-radius:8px; margin-top:auto; line-height:1.75;">primary:    <span style="color:rgba(184,160,112,0.9);">'#C8001A'</span>
+background: <span style="color:rgba(184,160,112,0.9);">'#FFFFFF'</span>
+text:       <span style="color:rgba(184,160,112,0.9);">'#1C1A18'</span>
+error:      <span style="color:rgba(184,160,112,0.9);">'#A1524A'</span></div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:26px 22px; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:44px; font-weight:800; color:rgba(28,26,24,0.07); letter-spacing:-0.04em; line-height:1;">02</div>
+        <div style="font-size:19px; font-weight:600; color:#1C1A18;">폰트 하나만 고르기</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.75;">한국어: Pretendard 또는 Noto Sans KR<br>영어: Inter 또는 Geist<br>숫자·코드: JetBrains Mono</div>
+        <div class="code-wrap" style="font-size:18px; padding:13px 15px; border-radius:8px; margin-top:auto; line-height:1.75;">typography: {
+  fontFamily:
+    "'Pretendard', sans-serif"
+}</div>
+      </div>
+      <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.06); border-radius:10px; padding:26px 22px; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:44px; font-weight:800; color:rgba(122,176,204,0.18); letter-spacing:-0.04em; line-height:1;">03</div>
+        <div style="font-size:19px; font-weight:600; color:#1C1A18;">라이브러리 그냥 쓰기</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.75;">MUI · shadcn/ui 같은 라이브러리는<br>토큰 체계가 이미 설계되어 있음<br>직접 처음부터 만들 필요 없음</div>
+        <div style="margin-top:auto; font-size:18px; color:rgba(122,176,204,0.9); font-weight:600; font-family:monospace;">→ 오늘 데모에서 쓴 방법</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:13px; display:flex; gap:28px;">
+      <div style="font-size:16px; color:rgba(28,26,24,0.66); line-height:1.7;"><span style="font-weight:600; color:rgba(28,26,24,0.6);">주의</span> — 완벽한 체계보다 일단 시작이 중요. 색상 4개로 시작해서 필요할 때 확장.</div>
+      <div style="font-size:16px; color:rgba(28,26,24,0.66); line-height:1.7; flex:1;"><span style="font-weight:600; color:rgba(28,26,24,0.6);">다음 단계</span> — 간격(spacing) · 테두리 반경(borderRadius) · 그림자(shadow) 순서로 추가.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token AI 세팅 프롬프트 ════ -->
+<div class="slide" id="s-dt-prompt">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — AI로 30분 안에 세팅하기</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:24px 52px 24px; flex-direction:column; gap:12px;">
+    <div style="flex-shrink:0;">
+      <div class="eyebrow">Claude Code에 복붙하면 끝 — 3가지 시나리오</div>
+      <div class="big-title" style="font-size:36px; margin-bottom:0;">초기 세팅 프롬프트</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; flex:1; min-height:0;">
+      <!-- 프롬프트 1 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(184,160,112,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:4px;">신규 프로젝트</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">색상값으로 토큰 생성</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">KT 대시보드용 design token
+파일(theme.js)을 만들어줘.
+
+<span style="color:rgba(122,176,204,0.9);">primary: #E8000D
+background: #F7F5F2
+text: #1C1A18
+success: #1e6640
+border: #DDD8D0</span>
+
+MUI createTheme() 형식과
+CSS Custom Properties 둘 다.
+
+CLAUDE.md는 이 파일을
+@참조하는 한 줄로 줄여줘.</div>
+      </div>
+      <!-- 프롬프트 2 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(122,155,130,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:4px;">기존 프로젝트</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">CSS에서 토큰 추출</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">아래 CSS에서 반복되는
+색상·폰트·간격 값을 추출해서
+design token으로 변환해줘.
+
+<span style="color:rgba(122,176,204,0.9);">[CSS 파일 내용 붙여넣기]</span>
+
+결과물:
+1. 중복 제거된 토큰 목록
+2. theme.js (MUI 형식)
+3. 기존 CSS를 토큰 참조로
+   대체한 리팩토링 버전</div>
+      </div>
+      <!-- 프롬프트 3 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(122,176,204,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,176,204,0.8); font-family:monospace; margin-bottom:4px;">CLAUDE.md → Token 마이그레이션</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">자연어 규칙을 토큰으로 전환</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">내 CLAUDE.md 디자인 규칙을
+토큰으로 변환해줘.
+
+<span style="color:rgba(122,176,204,0.9);">[CLAUDE.md 내용 붙여넣기]</span>
+
+· 수치화 가능한 것 → theme.js
+· 나머지만 CLAUDE.md에 남기기
+
+목표: CLAUDE.md를 최대한
+짧게 줄여서 토큰 소비 절감.
+새 CLAUDE.md는 theme.js를
+@참조하는 방식으로.</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:11px; display:flex; gap:32px; align-items:center; flex-shrink:0;">
+      <div style="font-size:13px; color:rgba(28,26,24,0.60); line-height:1.65;"><span style="font-weight:600; color:rgba(28,26,24,0.55);">추천 순서</span> — 신규: 프롬프트 1 → 기존 CSS 있음: 프롬프트 2 → CLAUDE.md 이미 있음: 프롬프트 3</div>
+      <div style="font-size:13px; color:rgba(28,26,24,0.60); flex:1;">라이브러리 없을 때도 동일: <code style="font-family:monospace; font-size:12px; background:#EDECEA; padding:1px 5px;">:root { --color-primary: #E8000D; }</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 레퍼런스 ════ -->
+<div class="slide" id="s-dt4">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 레퍼런스</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:28px 52px 32px; flex-direction:column; gap:14px;">
+    <div>
+      <div class="eyebrow">참고 사이트 5개</div>
+      <div class="big-title" style="font-size:42px; margin-bottom:0;">처음엔 보고 따라 하기</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; flex:1; align-content:start;">
+      <a href="https://mui.com" target="_blank" style="text-decoration:none; border:1px solid rgba(122,176,204,0.4); background:rgba(122,176,204,0.07); border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(122,176,204,0.13)'" onmouseout="this.style.background='rgba(122,176,204,0.07)'">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(122,176,204,0.9); font-family:monospace;">오늘 데모에서 사용 ↗</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">MUI</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.62); font-family:monospace;">mui.com</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">React용 가장 완성된 컴포넌트 라이브러리. <code style="font-family:monospace; font-size:18px;">createTheme()</code>으로 토큰 정의.</div>
+      </a>
+      <a href="https://ui.shadcn.com" target="_blank" style="text-decoration:none; border:1px solid rgba(144,128,176,0.35); background:rgba(144,128,176,0.07); border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(144,128,176,0.13)'" onmouseout="this.style.background='rgba(144,128,176,0.07)'">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(144,128,176,0.9); font-family:monospace;">2025년 트렌드 1위 ↗</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">shadcn/ui</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.62); font-family:monospace;">ui.shadcn.com</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">CSS 변수 기반 토큰. 복사-붙여넣기 방식으로 컴포넌트를 직접 코드에 소유.</div>
+      </a>
+      <a href="https://www.figma.com" target="_blank" style="text-decoration:none; border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(122,155,130,0.13)'" onmouseout="this.style.background='rgba(122,155,130,0.07)'">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(122,155,130,0.9); font-family:monospace;">디자이너 도구 ↗</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">Figma Variables</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.62); font-family:monospace;">figma.com</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">Figma 내장 변수 기능이 Design Token과 동일. 디자인 파일에서 토큰을 정의하고 공유.</div>
+      </a>
+      <a href="https://styledictionary.com" target="_blank" style="text-decoration:none; border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(184,160,112,0.13)'" onmouseout="this.style.background='rgba(184,160,112,0.07)'">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(184,160,112,0.9); font-family:monospace;">다플랫폼 변환 ↗</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">Style Dictionary</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.62); font-family:monospace;">styledictionary.com</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">Amazon 오픈소스. JSON으로 정의하면 CSS·iOS·Android 코드로 자동 변환.</div>
+      </a>
+      <a href="https://tokens.studio" target="_blank" style="text-decoration:none; border:1px solid rgba(175,152,110,0.35); background:rgba(175,152,110,0.07); border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(175,152,110,0.13)'" onmouseout="this.style.background='rgba(175,152,110,0.07)'">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(175,152,110,0.9); font-family:monospace;">Figma 플러그인 ↗</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18;">Tokens Studio</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.62); font-family:monospace;">tokens.studio</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.5); line-height:1.65;">Figma에서 JSON 토큰을 직접 관리. GitHub와 동기화해서 디자인-개발 자동화.</div>
+      </a>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="font-size:18px; color:rgba(28,26,24,0.62);">비코더 시작점 → Figma Variables 개념 파악 → MUI로 직접 구현</div>
+      <div style="font-size:18px; color:rgba(28,26,24,0.62);">코드 없이 → Tokens Studio + Figma</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 섹션 브레이크 ════ -->
+<div class="slide" id="s-dt-anthropic">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Anthropic 실무 사례</div>
+    <div class="sec-title" style="font-size:clamp(26px,3.4vw,46px);">AI 분석 시스템을<br>직접 만들어 쓴 방법</div>
+    <div class="sec-sub" style="font-size:18px;">내부 쿼리 95% 자동화 · 정확도 95%<br>데이터 분석팀 없이, 비개발자도 직접 분석</div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 21% → 95% ════ -->
+<div class="slide" id="s-dt5">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 01 — 정확도 차이</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:32px 52px 32px; flex-direction:column; gap:16px;">
+    <div>
+      <div class="eyebrow">정확도 차이를 만든 것</div>
+      <div class="big-title" style="font-size:42px; margin-bottom:0;">SQL이 아니라 절차를 알려줬을 때</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:center;">
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:22px 20px;">
+        <div style="font-size:58px; font-weight:800; color:rgba(184,160,112,0.9); letter-spacing:-0.04em; line-height:1;">21%</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.70); margin-top:8px;">스킬 없이 — 데이터만 제공했을 때</div>
+      </div>
+      <div style="font-size:24px; color:rgba(28,26,24,0.55); padding:0 8px;">→</div>
+      <div style="border:1px solid rgba(122,176,204,0.35); background:rgba(122,176,204,0.07); border-radius:10px; padding:22px 20px;">
+        <div style="font-size:58px; font-weight:800; color:rgba(122,176,204,0.95); letter-spacing:-0.04em; line-height:1;">95%</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.70); margin-top:8px;">스킬 추가 후 — 분석 절차를 문서화했을 때</div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; align-content:start;">
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 20px; background:rgba(28,26,24,0.03);">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.62); font-family:monospace; margin-bottom:7px;">스킬이란?</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:6px;">시니어 분석가의 사고방식을 글로 적은 것</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">SQL 원문이 아니라 "어떤 순서로 생각하는가"를 Markdown으로 문서화. 수천 개 쿼리 히스토리보다 구조화된 절차 1개가 더 효과적.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 20px; background:rgba(28,26,24,0.03);">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.62); font-family:monospace; margin-bottom:7px;">실무 교훈</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:6px;">데이터 양이 아니라 구조와 맥락이 AI 성능 결정</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">과거 SQL 수천 개 → 정확도 1% 미만 향상<br>절차 문서 1개 추가 → 정확도 74%p 향상<br><br>양이 아니라, <span style="color:#1C1A18; font-weight:600;">맥락</span>이 결정한다.</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:11px;">
+      <div style="font-size:18px; color:rgba(28,26,24,0.62); line-height:1.8;">적용 방법 → 팀의 분석 워크플로우를 CLAUDE.md 또는 Markdown 파일로 작성. AI에게 "어떻게 생각해야 하는지"를 먼저 알려주기.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 정의가 먼저 ════ -->
+<div class="slide" id="s-dt6">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 02 — 개념 정의</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel" style="justify-content:flex-start; gap:16px;">
+      <div class="eyebrow">데이터 품질의 출발점</div>
+      <div class="big-title" style="font-size:clamp(24px,2.8vw,34px); line-height:1.3; margin-bottom:10px;">개념 정의가<br>AI 분석 품질을<br>결정한다</div>
+      <div class="body-text" style="font-size:16px; color:rgba(28,26,24,0.55);">
+        AI가 틀리는 이유 대부분은<br>
+        AI 실력이 아니라<br>
+        <span style="color:rgba(184,160,112,0.95); font-weight:600;">용어 정의의 모호함</span>에서 비롯됨
+      </div>
+      <svg width="200" height="80" viewBox="0 0 220 90" style="margin:14px 0; display:block;">
+        <rect x="0" y="32" width="80" height="26" rx="3" stroke="#444" stroke-width="1.2" fill="none"/>
+        <text x="40" y="49" text-anchor="middle" font-size="11" fill="#666" font-family="monospace">"액티브 유저"</text>
+        <line x1="82" y1="45" x2="108" y2="45" stroke="#444" stroke-width="1.2"/>
+        <polygon points="112,45 107,41 107,49" fill="#444"/>
+        <rect x="112" y="32" width="44" height="26" rx="3" stroke="rgba(122,176,204,0.7)" stroke-width="1.2" fill="none"/>
+        <text x="134" y="49" text-anchor="middle" font-size="11" fill="rgba(122,176,204,0.9)" font-family="monospace">AI</text>
+        <line x1="158" y1="45" x2="178" y2="45" stroke="#444" stroke-width="1.2"/>
+        <polygon points="182,45 177,41 177,49" fill="#444"/>
+        <rect x="182" y="32" width="36" height="26" rx="3" stroke="rgba(184,160,112,0.7)" stroke-width="1.2" fill="none"/>
+        <text x="200" y="49" text-anchor="middle" font-size="11" fill="rgba(184,160,112,0.9)" font-family="monospace">?</text>
+        <text x="40" y="74" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">정의 없음</text>
+        <text x="200" y="74" text-anchor="middle" font-size="9" fill="rgba(184,160,112,0.7)" font-family="monospace">오답</text>
+      </svg>
+    </div>
+    <div style="flex:1; padding:38px 44px; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:17px 20px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:6px;">실제 예시</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:6px;">영업팀 vs 마케팅팀의 "액티브 유저"</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">영업팀: 최근 30일 내 로그인한 유저<br>마케팅팀: 최근 7일 내 구매한 유저<br>→ 같은 질문, 다른 답 — AI는 어떤 정의를 써야 할지 모름</div>
+      </div>
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:17px 20px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:6px;">해결 방법</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:7px;">KPI 정의서 한 페이지로 시작</div>
+        <div class="code-wrap" style="font-size:18px; padding:11px 15px; border-radius:6px; line-height:1.8;">액티브 유저 = 최근 30일 내 1회 이상 로그인한 유저<br>제외: 테스트 계정, 내부 직원</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:17px 20px; background:rgba(28,26,24,0.03);">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.60); font-family:monospace; margin-bottom:6px;">워크숍 활동 제안</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; margin-bottom:6px;">팀 KPI 중 정의가 다른 것 3개 찾기</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">영업 · 마케팅 · 개발팀이 각자 쓰는 "고객 수" 계산법을 비교. 다르면 AI 분석 전에 먼저 통일.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic AI 초안 + 사람 검증 ════ -->
+<div class="slide" id="s-dt7">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 03 — 운영 원칙</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:32px 52px 32px; flex-direction:column; gap:16px;">
+    <div>
+      <div class="eyebrow">Anthropic 내부 운영 원칙</div>
+      <div class="big-title" style="font-size:42px; margin-bottom:0;">AI는 초안 머신, 정의는 사람이</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:13px; flex:1; align-content:start;">
+      <div style="border:1px solid rgba(122,155,130,0.35); background:rgba(122,155,130,0.07); border-radius:10px; padding:20px 20px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:8px;">AI가 잘하는 것</div>
+        <div style="font-size:16px; font-weight:600; color:#1C1A18; margin-bottom:6px;">문서 초안 작성</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">지표 정의 초안, KPI 제안, 컬럼 설명 자동 생성. 사람보다 빠르고 누락 없음.</div>
+      </div>
+      <div style="border:1px solid rgba(184,160,112,0.35); background:rgba(184,160,112,0.07); border-radius:10px; padding:20px 20px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:8px;">사람이 해야 하는 것</div>
+        <div style="font-size:16px; font-weight:600; color:#1C1A18; margin-bottom:6px;">정의의 최종 책임</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">AI 초안이 맞는지 검토하고 서명. "이 정의는 우리 비즈니스에 맞는가"는 사람만 판단 가능.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:20px 20px; background:rgba(28,26,24,0.03);">
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.62); font-family:monospace; margin-bottom:8px;">운영 주의사항</div>
+        <div style="font-size:16px; font-weight:600; color:#1C1A18; margin-bottom:6px;">1개월 방치 시 95% → 65%</div>
+        <div style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">데이터 모델이 바뀌면 AI 분석 정확도가 자동으로 떨어짐. 정기 업데이트 필수.</div>
+      </div>
+    </div>
+    <div style="border:1.5px solid rgba(175,152,110,0.35); border-radius:10px; padding:20px 24px; background:rgba(175,152,110,0.07); display:flex; align-items:center; gap:24px;">
+      <div>
+        <div style="font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(175,152,110,0.9); font-family:monospace; margin-bottom:6px;">이 섹션 전체의 결론</div>
+        <div style="font-size:18px; font-weight:600; color:#1C1A18; line-height:1.55;">Design Token이든 AI 분석이든 — 처음부터 완벽할 필요 없음<br>색상 4개, KPI 정의 3개, 작은 시작이 맞는 방향</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Live Demo Section ════ -->
+<div class="slide" id="sec-demo">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--bg);">
+    <div class="sec-label">Part 3 — Live Demo</div>
+    <div class="sec-title">실제로 돌려봅니다</div>
+    <div class="sec-sub">Demo 1 — 산업군별 대시보드 사례<br>Demo 2 — KT 적용사례 (사전 설문 기반)</div>
+  </div>
+</div>
+
+<!-- ════ Demo 1: 산업군별 ════ -->
+<div class="slide" id="s-demo1">
+  <div class="tb"><span class="tb-cap">Part 3 · Live Demo 1 — 산업군별 대시보드</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="eyebrow">Live Demo 1</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:16px;">CSV → 대시보드<br>7단계 자동 실행</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.70); line-height:1.8; margin-bottom:24px;">샘플 데이터 투입<br>파이프라인 실행<br>결과물 확인</div>
+        <div class="code-wrap" style="font-size:18px; padding:14px 16px;">
+          <div class="code-line-green">claude .</div>
+          <div class="code-line-hi" style="margin-top:4px;">"파이프라인 실행해줘"</div>
+        </div>
+      </div>
+      <div class="slide-num">Demo 1 / 2</div>
+    </div>
+    <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+      <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:8px;">오늘 보여드릴 산업군별 사례</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; gap:16px; align-items:center; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; width:90px; flex-shrink:0; letter-spacing:0.06em;">MARKETING</span><span style="font-size:18px; color:#1C1A18;">채널 ROI + K-means 클러스터링 대시보드</span></div>
+        <div style="display:flex; gap:16px; align-items:center; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; width:90px; flex-shrink:0; letter-spacing:0.06em;">SALES</span><span style="font-size:18px; color:#1C1A18;">MRR 분해 + 코호트 리텐션 + LTV 시뮬레이터</span></div>
+        <div style="display:flex; gap:16px; align-items:center; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; width:90px; flex-shrink:0; letter-spacing:0.06em;">HR</span><span style="font-size:18px; color:#1C1A18;">이탈 위험 예측 + 채용 퍼널 분석</span></div>
+        <div style="display:flex; gap:16px; align-items:center; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; width:90px; flex-shrink:0; letter-spacing:0.06em;">PM</span><span style="font-size:18px; color:#1C1A18;">메트릭 하이라키 + 세그먼트별 이탈 위험</span></div>
+      </div>
+      <div style="margin-top:8px; font-size:18px; color:rgba(28,26,24,0.55); line-height:1.7;">★ 임팩트 있는 구간 집중 · 중간 과정 스킵하며 진행</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Demo 2: KT 적용사례 ════ -->
+<div class="slide" id="s-demo2">
+  <div class="tb"><span class="tb-cap">Part 3 · Live Demo 2 — KT 모니터링 대시보드</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel">
+      <div>
+        <div class="eyebrow">Live Demo 2</div>
+        <div class="big-title" style="font-size:clamp(22px,2.6vw,32px); margin-bottom:16px;">클라우드 구독<br>모니터링<br>대시보드</div>
+        <div style="font-size:18px; color:rgba(28,26,24,0.70); line-height:1.8;">KT 요청 시나리오<br>사용량 · 토큰 · 비용 추세<br>시스템별 현황 한눈에</div>
+        <div style="margin-top:20px; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(28,26,24,0.55);">샘플 데이터 직접 제작</div>
+      </div>
+      <div class="slide-num">Demo 2 / 2</div>
+    </div>
+    <div style="flex:1; padding:36px 44px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+      <div style="font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.58); margin-bottom:8px;">대시보드 구성 요소</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; gap:16px; align-items:flex-start; padding:14px 18px; background:rgba(138,191,168,0.08); border:1px solid rgba(138,191,168,0.18); border-radius:10px;"><span style="font-size:16px; color:#8ABFA8; font-weight:700; width:100px; flex-shrink:0; letter-spacing:0.06em; padding-top:2px;">사용량 추세</span><span style="font-size:16px; color:#1C1A18; line-height:1.6;">서비스/시스템별 월간 사용량 추세<br><span style="color:rgba(28,26,24,0.70); font-size:18px;">API 호출 수 · 토큰 소비량 · 활성 사용자</span></span></div>
+        <div style="display:flex; gap:16px; align-items:flex-start; padding:14px 18px; background:rgba(239,176,93,0.06); border:1px solid rgba(239,176,93,0.15); border-radius:10px;"><span style="font-size:16px; color:#efb05d; font-weight:700; width:100px; flex-shrink:0; letter-spacing:0.06em; padding-top:2px;">비용 분석</span><span style="font-size:16px; color:#1C1A18; line-height:1.6;">구독 서비스별 비용 현황 · 예산 대비 실적<br><span style="color:rgba(28,26,24,0.70); font-size:18px;">월별 비용 추세 · 서비스별 비중 · 초과 알림</span></span></div>
+        <div style="display:flex; gap:16px; align-items:flex-start; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:rgba(28,26,24,0.5); font-weight:700; width:100px; flex-shrink:0; letter-spacing:0.06em; padding-top:2px;">시스템 현황</span><span style="font-size:16px; color:#1C1A18; line-height:1.6;">여러 시스템 통합 현황판 · 상태 모니터링<br><span style="color:rgba(28,26,24,0.70); font-size:18px;">정상 · 경고 · 장애 상태 색상 구분</span></span></div>
+        <div style="display:flex; gap:16px; align-items:flex-start; padding:14px 18px; background:rgba(28,26,24,0.04); border-radius:10px;"><span style="font-size:16px; color:rgba(28,26,24,0.5); font-weight:700; width:100px; flex-shrink:0; letter-spacing:0.06em; padding-top:2px;">이상 탐지</span><span style="font-size:16px; color:#1C1A18; line-height:1.6;">사용량 급증 · 비정상 패턴 자동 감지<br><span style="color:rgba(28,26,24,0.70); font-size:18px;">Z-score 기반 이상치 탐지 · AI 요약</span></span></div>
+      </div>
+      <div style="margin-top:4px; font-size:18px; color:rgba(28,26,24,0.55); line-height:1.7;">★ KT 디자인 시스템(Seamless Flow) 컬러·타이포 참조 적용</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ Q&A ════ -->
+<div class="slide" id="sqna">
+  <div class="tb"><span class="tb-cap">Q&amp;A — KT 적용 포인트 &amp; 질의응답</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:0;">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:32px; background:#EDECEA; padding:60px;">
+      <div style="font-size:clamp(66px,9vw,96px); font-weight:800; color:#1C1A18; line-height:1.0; letter-spacing:-0.04em;">Q&amp;A</div>
+      <div style="display:flex; flex-direction:column; gap:9px; max-width:600px; text-align:left;">
+        <div style="font-size:16px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(28,26,24,0.55); margin-bottom:4px; text-align:center;">사전 질문 카테고리별 해소</div>
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:rgba(138,191,168,0.08); border-radius:6px;"><span style="color:#8ABFA8; font-size:16px; font-weight:700; flex-shrink:0; width:60px;">AI도구</span><span style="font-size:16px; color:rgba(28,26,24,0.55); line-height:1.7;">Claude Code vs ChatGPT vs BI툴 — 포지셔닝 슬라이드 참조</span></div>
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:rgba(239,176,93,0.05); border-radius:6px;"><span style="color:#efb05d; font-size:16px; font-weight:700; flex-shrink:0; width:60px;">대시보드</span><span style="font-size:16px; color:rgba(28,26,24,0.55); line-height:1.7;">KPI 계층 설계 · 데이터 특성별 차트 선택 기준</span></div>
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:rgba(28,26,24,0.03); border-radius:6px;"><span style="color:#8dc8b4; font-size:16px; font-weight:700; flex-shrink:0; width:60px;">현장적용</span><span style="font-size:16px; color:rgba(28,26,24,0.55); line-height:1.7;">활용도 하락 원인 진단 · 배포 방법 (GitHub Pages · 로컬 서버)</span></div>
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:rgba(28,26,24,0.03); border-radius:6px;"><span style="color:rgba(28,26,24,0.62); font-size:16px; font-weight:700; flex-shrink:0; width:60px;">기타</span><span style="font-size:16px; color:rgba(28,26,24,0.74); line-height:1.7;">자동화 (cron · 스케줄러) · 구독 조합 · PPT 연동 · 리포팅</span></div>
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:rgba(138,191,168,0.08); border-radius:6px;"><span style="color:#8ABFA8; font-size:16px; font-weight:700; flex-shrink:0; width:60px;">KT 적용</span><span style="font-size:16px; color:rgba(28,26,24,0.55); line-height:1.7;">모니터링 파이프라인 연결 · KT Seamless Flow 디자인 시스템 적용</span></div>
+      </div>
+      <div style="font-size:16px; color:rgba(28,26,24,0.55); letter-spacing:0.08em; margin-top:8px;">전서연 · DataBridge · databridge.co.kr</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="nav">
+  <span class="nav-ctr" id="ctr">1 / 1</span>
+  <button class="nav-btn" onclick="go(-1)">←</button>
+  <button class="nav-btn" onclick="go(1)">→</button>
+</div>
+<div class="progress" id="bar"></div>
+
+<script>
+  let cur = 0;
+  const slides = document.querySelectorAll('.slide');
+  const n = slides.length;
+  function go(d) {
+    slides[cur].classList.remove('active');
+    cur = (cur + d + n) % n;
+    slides[cur].classList.add('active');
+    document.getElementById('ctr').textContent = (cur + 1) + ' / ' + n;
+    document.getElementById('bar').style.width = ((cur + 1) / n * 100) + '%';
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+  document.getElementById('ctr').textContent = '1 / ' + n;
+  document.getElementById('bar').style.width = (1 / n * 100) + '%';
+  function scaleSlides() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const scale = Math.min(vw / 1280, vh / 800);
+    const scaledW = 1280 * scale, scaledH = 800 * scale;
+    const deck = document.querySelector('.deck');
+    deck.style.transform = 'translate(' + (vw - scaledW) / 2 + 'px, ' + (vh - scaledH) / 2 + 'px) scale(' + scale + ')';
+    deck.style.transformOrigin = 'top left';
+    document.body.style.background = '#F7F5F2';
+  }
+  scaleSlides();
+  window.addEventListener('resize', scaleSlides);
+</script>
+</body>
+</html>

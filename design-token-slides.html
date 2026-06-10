@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Token — KT AI 세미나</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #F2F2EF;
+    --text: #1C1A18;
+    --sub: #4a4a4a;
+    --dim: #777;
+    --border: #D8D5D0;
+    --p01: #E8603C;
+    --green: #35c995;
+    --code-bg: #0A0C10;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+  }
+
+  .deck { width: 1280px; height: 800px; transform-origin: top left; position: fixed; top: 0; left: 0; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--bg); }
+  .slide.active { display: flex; }
+
+  .tb {
+    height: 48px; min-height: 48px;
+    padding: 0 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .tb-cap { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); font-family: 'Poppins', sans-serif; }
+  .tb-num { font-size: 13px; color: var(--dim); letter-spacing: 0.08em; }
+
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  /* section break */
+  .sec-break { background: var(--bg); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .sec-label { font-size: 16px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(0,0,0,0.45); margin-bottom: 20px; font-family: 'Poppins',sans-serif; }
+  .sec-title { font-size: 72px; font-weight: 600; line-height: 1.15; color: var(--text); font-family: 'Poppins',sans-serif; letter-spacing: -0.02em; }
+  .sec-sub { font-size: 22px; color: rgba(0,0,0,0.55); margin-top: 28px; line-height: 2; }
+
+  /* principle columns */
+  .principle-col { flex: 1; border-right: 1px solid var(--border); padding: 52px 48px; display: flex; flex-direction: column; }
+  .principle-col:last-child { border-right: none; }
+  .principle-n { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 20px; font-family: 'Poppins',sans-serif; }
+  .principle-title { font-size: 26px; font-weight: 600; color: var(--text); margin-bottom: 20px; line-height: 1.3; }
+  .principle-body { font-size: 19px; color: #333; line-height: 1.85; }
+
+  /* item card */
+  .item-card { border: 1px solid var(--border); border-radius: 8px; padding: 20px 22px; display: flex; flex-direction: column; gap: 6px; }
+  .item-card + .item-card { margin-top: 10px; }
+  .item-card.hl { border-color: rgba(232,96,60,0.3); background: rgba(232,96,60,0.03); }
+  .item-card.ok { border-color: rgba(53,201,149,0.3); background: rgba(53,201,149,0.03); }
+  .item-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-family: 'JetBrains Mono',monospace; }
+  .item-title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .item-body { font-size: 16px; color: #444; line-height: 1.7; }
+
+  /* two-panel layout */
+  .l-panel { width: 42%; border-right: 1px solid var(--border); padding: 52px; display: flex; flex-direction: column; }
+  .r-panel { flex: 1; padding: 52px; display: flex; flex-direction: column; }
+
+  /* eyebrow + big title */
+  .eyebrow { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sub); margin-bottom: 18px; font-family: 'Poppins',sans-serif; }
+  .big-title { font-size: 48px; font-weight: 600; line-height: 1.2; letter-spacing: -0.025em; color: var(--text); margin-bottom: 28px; font-family: 'Poppins',sans-serif; }
+  .body-text { font-size: 21px; color: #333; line-height: 1.9; }
+
+  /* code block */
+  .code-wrap { background: var(--code-bg); padding: 20px 26px; font-family: 'JetBrains Mono',monospace; font-size: 15px; line-height: 1.85; color: rgba(255,255,255,0.75); border-radius: 6px; }
+  .code-hi { color: rgba(255,255,255,0.95); }
+  .code-comment { color: rgba(255,255,255,0.38); }
+  .code-green { color: #35c995; }
+  .code-orange { color: #E8603C; }
+  .code-red { color: #ef7d86; }
+
+  /* split code comparison */
+  .code-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; }
+  .code-col { display: flex; flex-direction: column; gap: 10px; }
+  .code-col-label { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); font-family: 'JetBrains Mono',monospace; }
+
+  /* reference grid */
+  .ref-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; flex: 1; align-content: start; }
+  .ref-card { border: 1px solid var(--border); border-radius: 8px; padding: 22px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .ref-card.current { border-color: rgba(232,96,60,0.35); background: rgba(232,96,60,0.03); }
+  .ref-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .ref-url { font-size: 11px; color: var(--dim); font-family: 'JetBrains Mono',monospace; }
+  .ref-desc { font-size: 14px; color: #555; line-height: 1.65; }
+  .ref-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--p01); font-family: 'JetBrains Mono',monospace; }
+
+  /* stat callout */
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 28px; }
+  .stat-card { border: 1px solid var(--border); border-radius: 8px; padding: 22px 20px; }
+  .stat-card.hl { border-color: rgba(53,201,149,0.35); background: rgba(53,201,149,0.04); }
+  .stat-card.warn { border-color: rgba(232,96,60,0.3); background: rgba(232,96,60,0.03); }
+  .stat-num { font-size: 36px; font-weight: 600; font-family: 'Poppins',sans-serif; letter-spacing: -0.02em; }
+  .stat-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+
+  /* nav */
+  .nav { position: fixed; bottom: 24px; right: 40px; display: flex; align-items: center; gap: 12px; z-index: 100; }
+  .nav-ctr { font-size: 11px; color: #888; letter-spacing: 0.08em; }
+  .nav-btn { background: none; border: none; color: var(--sub); cursor: pointer; font-size: 18px; padding: 4px; transition: color 0.15s; }
+  .nav-btn:hover { color: var(--text); }
+  .progress { position: fixed; bottom: 0; left: 0; height: 2px; background: var(--p01); transition: width 0.3s; z-index: 100; }
+
+  /* clip dots */
+  .clip-dots { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; }
+  .clip-dot { width: 6px; height: 6px; border-radius: 50%; background: #CCC; transition: background 0.2s; }
+  .clip-dot.active { background: var(--p01); }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+
+<!-- ════ s1 | 섹션 표지 — Design Token ════ -->
+<div class="slide active" id="s1">
+  <div class="body" style="flex-direction:column;padding:64px 80px 72px;justify-content:space-between;">
+    <div>
+      <div style="font-size:14px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(0,0,0,0.45);margin-bottom:18px;font-family:'Poppins',sans-serif;">KT AI 세미나 · 2026-06-11</div>
+      <div style="font-size:56px;font-weight:600;color:var(--text);line-height:1.15;letter-spacing:-0.02em;font-family:'Poppins',sans-serif;">Design Token</div>
+      <div style="font-size:22px;color:rgba(0,0,0,0.5);margin-top:18px;line-height:1.8;">색상·폰트·간격을 이름 붙인 변수<br>— 하나 바꾸면 전체가 바뀌는 구조</div>
+    </div>
+    <div style="display:flex;gap:20px;align-items:stretch;">
+      <div style="flex:1;border:1px solid var(--border);border-radius:8px;padding:26px 24px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);font-family:'Poppins',sans-serif;margin-bottom:12px;">이 슬라이드에서 다루는 것</div>
+        <div style="font-size:18px;color:var(--text);line-height:2;">토큰 방식의 장단점<br>일반인을 위한 설계 방법<br>참고 사이트 5개</div>
+      </div>
+      <div style="flex:1;border:1px solid var(--border);border-radius:8px;padding:26px 24px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);font-family:'Poppins',sans-serif;margin-bottom:12px;">실무 사례</div>
+        <div style="font-size:18px;color:var(--text);line-height:2;">Anthropic 내부 AI 분석 시스템<br>정확도 21% → 95% 달성 방법<br>팀에서 바로 쓸 수 있는 팁 3가지</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ s2 | 장단점 비교 ════ -->
+<div class="slide" id="s2">
+  <div class="tb"><span class="tb-cap">Design Token · 장단점</span><span class="tb-num">2</span></div>
+  <div class="body">
+
+    <!-- 장점 -->
+    <div class="principle-col">
+      <div class="principle-n" style="color:var(--green);">장점 · Pros</div>
+      <div class="principle-title">바꾸기 쉬워지는 이유</div>
+
+      <div class="item-card ok">
+        <div class="item-label">일관성</div>
+        <div class="item-title">한 곳만 바꾸면 전체 적용</div>
+        <div class="item-body">Primary 색상 하나가 버튼·헤더·뱃지 모두에 연결. 브랜드 색상 변경 시 한 줄로 끝.</div>
+      </div>
+      <div class="item-card ok">
+        <div class="item-label">테마 전환</div>
+        <div class="item-title">다크모드·브랜드 교체 즉시 반영</div>
+        <div class="item-body">MUI <span style="font-family:'JetBrains Mono',monospace;font-size:14px;">createTheme()</span>으로 테마만 교체하면<br>전체 UI가 한 번에 바뀜.</div>
+      </div>
+      <div class="item-card ok">
+        <div class="item-label">협업</div>
+        <div class="item-title">디자이너 · 개발자 공통 언어</div>
+        <div class="item-body">"Primary Blue"라는 이름을 공유. 디자인 파일과 코드가 같은 이름으로 동기화.</div>
+      </div>
+      <div class="item-card ok">
+        <div class="item-label">유지보수</div>
+        <div class="item-title">하드코딩 찾아다닐 필요 없음</div>
+        <div class="item-body">코드 전체를 검색하지 않아도 됨. 값이 어디에 쓰이는지 즉시 파악 가능.</div>
+      </div>
+    </div>
+
+    <!-- 단점 -->
+    <div class="principle-col">
+      <div class="principle-n" style="color:var(--p01);">단점 · Cons</div>
+      <div class="principle-title">감수해야 하는 비용</div>
+
+      <div class="item-card hl">
+        <div class="item-label">설계 비용</div>
+        <div class="item-title">처음에 체계 잡는 시간 필요</div>
+        <div class="item-body">어떤 단위까지 토큰화할지 결정해야 함. 너무 세밀하면 오히려 관리 부담 증가.</div>
+      </div>
+      <div class="item-card hl">
+        <div class="item-label">학습 곡선</div>
+        <div class="item-title">팀 전체가 체계를 이해해야 함</div>
+        <div class="item-body">토큰 이름만 보고 어떤 색인지 바로 알아야 함. 팀 온보딩 문서 필요.</div>
+      </div>
+      <div class="item-card hl">
+        <div class="item-label">추상화 위험</div>
+        <div class="item-title">잘못 설계하면 오히려 복잡</div>
+        <div class="item-body">토큰이 너무 많거나 계층이 깊어지면 어떤 값이 어디서 오는지 추적 어려움.</div>
+      </div>
+
+      <div style="margin-top:auto;border-top:1px solid var(--border);padding-top:18px;">
+        <div style="font-size:14px;color:var(--dim);line-height:1.8;">결론 — 3개 이상 페이지를 만드는 서비스라면<br>설계 비용을 감수할 가치가 있음</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════ s3 | 하드코딩 vs 토큰 코드 비교 ════ -->
+<div class="slide" id="s3">
+  <div class="tb"><span class="tb-cap">Design Token · 코드 비교</span><span class="tb-num">3</span></div>
+  <div class="body" style="padding:36px 52px 44px;flex-direction:column;gap:24px;">
+    <div>
+      <div class="eyebrow">Before / After</div>
+      <div class="big-title" style="font-size:38px;margin-bottom:0;">하드코딩 vs 토큰</div>
+    </div>
+
+    <div class="code-split" style="flex:1;">
+      <!-- 하드코딩 -->
+      <div class="code-col">
+        <div class="code-col-label" style="color:#ef7d86;">❌ 하드코딩 — 수정 시 3곳 모두 변경</div>
+        <div class="code-wrap" style="flex:1;">
+<span class="code-comment">/* 브랜드 색상을 #0057B7로 바꾸려면? */</span>
+
+<span class="code-comment">/* 버튼 */</span>
+.button {
+  background: <span class="code-red">#C8001A</span>;
+  color: #fff;
+}
+
+<span class="code-comment">/* 헤더 */</span>
+.header {
+  border-bottom: 3px solid <span class="code-red">#C8001A</span>;
+}
+
+<span class="code-comment">/* 뱃지 */</span>
+.badge {
+  color: <span class="code-red">#C8001A</span>;
+  border: 1px solid <span class="code-red">#C8001A</span>;
+}
+
+<span class="code-comment">/* → 4곳을 일일이 찾아서 바꿔야 함</span>
+<span class="code-comment">   파일이 많을수록 누락 위험 ↑      */</span>
+        </div>
+      </div>
+
+      <!-- 토큰 -->
+      <div class="code-col">
+        <div class="code-col-label" style="color:var(--green);">✅ Design Token — 한 곳만 바꾸면 끝</div>
+        <div class="code-wrap" style="flex:1;">
+<span class="code-comment">/* 토큰 정의 — 딱 한 곳에서만 */</span>
+const theme = createTheme({
+  palette: {
+    primary: { main: <span class="code-green">'#C8001A'</span> }
+                           <span class="code-comment">↑ 여기 하나만 바꾸면</span>
+  }
+})
+
+<span class="code-comment">/* 버튼 · 헤더 · 뱃지 모두 */</span>
+<span class="code-comment">/* theme.palette.primary.main 참조 */</span>
+
+&lt;Button color=<span class="code-green">"primary"</span>&gt;...&lt;/Button&gt;
+
+sx={{ borderColor: <span class="code-green">'primary.main'</span> }}
+sx={{ color: <span class="code-green">'primary.main'</span> }}
+
+<span class="code-comment">/* → 전체 자동 업데이트</span>
+<span class="code-comment">   누락 없음, 실수 없음          */</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════ s4 | 설계 방법 (일반인용) ════ -->
+<div class="slide" id="s4">
+  <div class="tb"><span class="tb-cap">Design Token · 설계 방법</span><span class="tb-num">4</span></div>
+  <div class="body" style="padding:40px 52px 44px;flex-direction:column;gap:22px;">
+    <div>
+      <div class="eyebrow">처음 설계하는 사람을 위한 3단계</div>
+      <div class="big-title" style="font-size:36px;margin-bottom:0;">색상만 먼저, 나머지는 나중에</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;flex:1;align-content:start;">
+
+      <!-- Step 1 -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div style="font-size:32px;font-weight:600;color:#E0E0E0;font-family:'Poppins',sans-serif;line-height:1;">01</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">색상 4가지만 정의</div>
+        <div style="font-size:15px;color:#555;line-height:1.75;">Primary · Background · Text · Error<br>이 4가지로 대부분의 UI 커버 가능</div>
+        <div class="code-wrap" style="font-size:13px;padding:14px 16px;margin-top:auto;">
+primary:    <span class="code-orange">'#C8001A'</span>
+background: <span class="code-orange">'#FFFFFF'</span>
+text:       <span class="code-orange">'#1C1A18'</span>
+error:      <span class="code-orange">'#A1524A'</span>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div style="font-size:32px;font-weight:600;color:#E0E0E0;font-family:'Poppins',sans-serif;line-height:1;">02</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">폰트 하나만 고르기</div>
+        <div style="font-size:15px;color:#555;line-height:1.75;">한국어: Pretendard 또는 Noto Sans KR<br>영어: Inter 또는 Geist<br>숫자·코드: JetBrains Mono</div>
+        <div class="code-wrap" style="font-size:13px;padding:14px 16px;margin-top:auto;">
+typography: {
+  fontFamily:
+    "'Pretendard', sans-serif"
+}
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div style="border:1px solid rgba(232,96,60,0.3);background:rgba(232,96,60,0.03);border-radius:8px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div style="font-size:32px;font-weight:600;color:rgba(232,96,60,0.25);font-family:'Poppins',sans-serif;line-height:1;">03</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">라이브러리 그냥 쓰기</div>
+        <div style="font-size:15px;color:#555;line-height:1.75;">MUI · shadcn/ui 같은 라이브러리는<br>토큰 체계가 이미 설계되어 있음<br>직접 처음부터 만들 필요 없음</div>
+        <div style="margin-top:auto;font-size:13px;color:var(--p01);font-weight:600;font-family:'JetBrains Mono',monospace;">→ 오늘 데모에서 쓴 방법</div>
+      </div>
+
+    </div>
+
+    <!-- 하단 노트 -->
+    <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;gap:28px;">
+      <div style="font-size:14px;color:var(--dim);line-height:1.7;">
+        <span style="font-weight:600;color:var(--text);">주의</span> — 완벽한 체계보다 일단 시작이 중요. 색상 4개로 시작해서 필요할 때 확장.
+      </div>
+      <div style="font-size:14px;color:var(--dim);line-height:1.7;flex:1;">
+        <span style="font-weight:600;color:var(--text);">다음 단계</span> — 간격(spacing) · 테두리 반경(borderRadius) · 그림자(shadow) 순서로 추가.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ s5 | 레퍼런스 사이트 ════ -->
+<div class="slide" id="s5">
+  <div class="tb"><span class="tb-cap">Design Token · 레퍼런스</span><span class="tb-num">5</span></div>
+  <div class="body" style="padding:36px 52px 44px;flex-direction:column;gap:20px;">
+    <div>
+      <div class="eyebrow">참고 사이트 5개</div>
+      <div class="big-title" style="font-size:36px;margin-bottom:0;">처음엔 보고 따라 하기</div>
+    </div>
+
+    <div class="ref-grid">
+
+      <div class="ref-card current">
+        <div class="ref-tag">오늘 데모에서 사용</div>
+        <div class="ref-name">MUI</div>
+        <div class="ref-url">mui.com</div>
+        <div class="ref-desc">React용 가장 완성된 컴포넌트 라이브러리. <span style="font-family:'JetBrains Mono',monospace;font-size:12px;">createTheme()</span>으로 토큰 정의. 문서 최고 수준.</div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-tag">2025년 트렌드 1위</div>
+        <div class="ref-name">shadcn/ui</div>
+        <div class="ref-url">ui.shadcn.com</div>
+        <div class="ref-desc">CSS 변수 기반 토큰. 복사-붙여넣기 방식으로 컴포넌트를 직접 코드에 소유. Tailwind 기반.</div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-tag">디자이너 도구</div>
+        <div class="ref-name">Figma Variables</div>
+        <div class="ref-url">figma.com</div>
+        <div class="ref-desc">Figma 내장 변수 기능이 Design Token과 동일. 디자인 파일에서 토큰을 정의하고 개발자와 공유 가능.</div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-tag">다플랫폼 변환</div>
+        <div class="ref-name">Style Dictionary</div>
+        <div class="ref-url">styledictionary.com</div>
+        <div class="ref-desc">Amazon 오픈소스. 토큰을 JSON으로 정의하면 CSS·iOS·Android 코드로 자동 변환. 대기업 표준.</div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-tag">Figma 플러그인</div>
+        <div class="ref-name">Tokens Studio</div>
+        <div class="ref-url">tokens.studio</div>
+        <div class="ref-desc">Figma에서 JSON 토큰 파일을 직접 관리. GitHub와 동기화해서 디자인-개발 워크플로우 자동화.</div>
+      </div>
+
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;color:var(--dim);">비코더 시작점 → Figma Variables로 개념 파악 → MUI로 직접 구현</div>
+      <div style="font-size:14px;color:var(--dim);">코드 작성 없이 → Tokens Studio + Figma</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ s6 | 섹션 브레이크 — Anthropic ════ -->
+<div class="slide" id="s6">
+  <div class="body">
+    <div class="sec-break">
+      <div class="sec-label">Anthropic 실무 사례</div>
+      <div class="sec-title" style="font-size:60px;">AI 분석 시스템을<br>직접 만들어 쓴 방법</div>
+      <div class="sec-sub">내부 쿼리 95% 자동화 · 정확도 95%<br>데이터 분석팀 없이, 비개발자도 직접 분석</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ s7 | 21% → 95% ════ -->
+<div class="slide" id="s7">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 01</span><span class="tb-num">7</span></div>
+  <div class="body" style="padding:40px 52px 44px;flex-direction:column;gap:24px;">
+
+    <div>
+      <div class="eyebrow">정확도 차이를 만든 것</div>
+      <div class="big-title" style="font-size:38px;margin-bottom:0;">SQL이 아니라 절차를 알려줬을 때</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card warn">
+        <div class="stat-num" style="color:var(--p01);">21%</div>
+        <div class="stat-label">스킬 없이 — 데이터만 제공했을 때</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:28px;color:#CCC;">→</div>
+      <div class="stat-card hl">
+        <div class="stat-num" style="color:var(--green);">95%</div>
+        <div class="stat-label">스킬 추가 후 — 분석 절차를 문서화했을 때</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;align-content:start;">
+      <div class="item-card">
+        <div class="item-label">스킬이란?</div>
+        <div class="item-title">시니어 분석가의 사고방식을 글로 적은 것</div>
+        <div class="item-body">SQL 원문이 아니라 "어떤 순서로 생각하는가"를 Markdown으로 문서화. 수천 개 쿼리 히스토리보다 구조화된 절차 1개가 더 효과적.</div>
+      </div>
+      <div class="item-card">
+        <div class="item-label">실무 교훈</div>
+        <div class="item-title">데이터 양이 아니라 구조와 맥락이 AI 성능 결정</div>
+        <div class="item-body">과거 SQL 수천 개 제공 → 정확도 1% 미만 향상<br>절차 문서 1개 추가 → 정확도 74%p 향상<br><br>질보다 양이 아니라, 맥락이 핵심.</div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:14px;color:var(--dim);line-height:1.8;">적용 방법 → 팀의 분석 워크플로우를 CLAUDE.md 또는 Markdown 파일로 작성. AI에게 "어떻게 생각해야 하는지"를 먼저 알려주기.</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════ s8 | 정의가 먼저 ════ -->
+<div class="slide" id="s8">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 02</span><span class="tb-num">8</span></div>
+  <div class="body">
+
+    <div class="l-panel" style="justify-content:flex-start;gap:20px;padding-top:52px;">
+      <div class="eyebrow">데이터 품질의 출발점</div>
+      <div class="principle-title" style="font-size:32px;">개념 정의가<br>AI 분석 품질을 결정</div>
+      <div class="principle-body" style="font-size:17px;">
+        AI가 틀리는 이유 대부분은<br>
+        AI 실력이 아니라<br>
+        <span style="color:var(--p01);font-weight:600;">용어 정의의 모호함</span>에서 비롯됨
+      </div>
+
+      <!-- SVG 다이어그램 -->
+      <svg width="220" height="90" viewBox="0 0 220 90" style="margin:20px 0;display:block;">
+        <!-- 모호한 질문 -->
+        <rect x="0" y="32" width="80" height="26" rx="3" stroke="#AAAAAA" stroke-width="1.2" fill="none"/>
+        <text x="40" y="49" text-anchor="middle" font-size="11" fill="#888" font-family="monospace">"액티브 유저"</text>
+
+        <!-- 화살표 -->
+        <line x1="82" y1="45" x2="108" y2="45" stroke="#CCCCCC" stroke-width="1.2"/>
+        <polygon points="112,45 107,41 107,49" fill="#CCCCCC"/>
+
+        <!-- AI -->
+        <rect x="112" y="32" width="44" height="26" rx="3" stroke="#6aac98" stroke-width="1.2" fill="none"/>
+        <text x="134" y="49" text-anchor="middle" font-size="11" fill="#6aac98" font-family="monospace">AI</text>
+
+        <!-- 화살표 -->
+        <line x1="158" y1="45" x2="178" y2="45" stroke="#CCCCCC" stroke-width="1.2"/>
+        <polygon points="182,45 177,41 177,49" fill="#CCCCCC"/>
+
+        <!-- 잘못된 답 -->
+        <rect x="182" y="32" width="36" height="26" rx="3" stroke="#ef7d86" stroke-width="1.2" fill="none"/>
+        <text x="200" y="49" text-anchor="middle" font-size="11" fill="#ef7d86" font-family="monospace">?</text>
+
+        <!-- 레이블 -->
+        <text x="40" y="74" text-anchor="middle" font-size="9" fill="#AAAAAA" font-family="monospace">정의 없음</text>
+        <text x="200" y="74" text-anchor="middle" font-size="9" fill="#ef7d86" font-family="monospace">오답</text>
+      </svg>
+    </div>
+
+    <div style="flex:1;padding:44px 48px;display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+      <div class="item-card" style="border-color:rgba(232,96,60,0.25);background:rgba(232,96,60,0.02);">
+        <div class="item-label">실제 예시</div>
+        <div class="item-title">영업팀 vs 마케팅팀의 "액티브 유저"</div>
+        <div class="item-body">영업팀: 최근 30일 내 로그인한 유저<br>마케팅팀: 최근 7일 내 구매한 유저<br>→ 같은 질문, 다른 답 — AI는 어떤 정의를 써야 할지 모름</div>
+      </div>
+
+      <div class="item-card ok">
+        <div class="item-label">해결 방법</div>
+        <div class="item-title">KPI 정의서 한 페이지로 시작</div>
+        <div class="item-body">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#333;">액티브 유저 = 최근 30일 내 1회 이상 로그인한 유저<br>제외: 테스트 계정, 내부 직원</span>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-label">워크숍 활동 제안</div>
+        <div class="item-title">팀 KPI 중 정의가 다른 것 3개 찾기</div>
+        <div class="item-body">영업 · 마케팅 · 개발팀이 각자 쓰는 "고객 수" 계산법을 비교. 다르면 AI 분석 전에 먼저 통일.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════ s9 | AI 초안 + 사람 검증 ════ -->
+<div class="slide" id="s9">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 03</span><span class="tb-num">9</span></div>
+  <div class="body" style="padding:40px 52px 44px;flex-direction:column;gap:22px;">
+
+    <div>
+      <div class="eyebrow">Anthropic 내부 운영 원칙</div>
+      <div class="big-title" style="font-size:38px;margin-bottom:0;">AI는 초안 머신, 정의는 사람이</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;flex:1;align-content:start;">
+
+      <div class="item-card ok">
+        <div class="item-label">AI가 잘하는 것</div>
+        <div class="item-title">문서 초안 작성</div>
+        <div class="item-body">지표 정의 초안, KPI 제안, 컬럼 설명 자동 생성. 사람보다 빠르고 누락 없음.</div>
+      </div>
+
+      <div class="item-card hl">
+        <div class="item-label">사람이 해야 하는 것</div>
+        <div class="item-title">정의의 최종 책임</div>
+        <div class="item-body">AI 초안이 맞는지 검토하고 서명. "이 정의는 우리 비즈니스에 맞는가"는 사람만 판단 가능.</div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-label">운영 주의사항</div>
+        <div class="item-title">1개월 방치 시 95% → 65%</div>
+        <div class="item-body">데이터 모델이 바뀌면 AI 분석 정확도가 자동으로 떨어짐. 정기 업데이트 필수.</div>
+      </div>
+
+    </div>
+
+    <!-- 결론 박스 -->
+    <div style="border:1.5px solid rgba(232,96,60,0.3);border-radius:8px;padding:20px 24px;background:rgba(232,96,60,0.03);display:flex;align-items:center;gap:28px;">
+      <div>
+        <div style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--p01);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">이 슬라이드 전체의 결론</div>
+        <div style="font-size:18px;font-weight:600;color:var(--text);line-height:1.55;">Design Token이든 AI 분석이든 — 처음부터 완벽할 필요 없음<br>색상 4개, KPI 정의 3개, 작은 시작이 맞는 방향</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+</div><!-- /deck -->
+
+<!-- 네비게이션 -->
+<div class="nav">
+  <button class="nav-btn" id="prev" onclick="nav(-1)">←</button>
+  <span class="nav-ctr" id="ctr">1 / 9</span>
+  <button class="nav-btn" id="next" onclick="nav(1)">→</button>
+</div>
+<div class="progress" id="progress"></div>
+<div class="clip-dots" id="dots"></div>
+
+<script>
+  const ORDER = ['s1','s2','s3','s4','s5','s6','s7','s8','s9']
+  let cur = 0
+
+  function scale() {
+    const deck = document.getElementById('deck')
+    const s = Math.min(window.innerWidth / 1280, window.innerHeight / 800)
+    deck.style.transform = `scale(${s})`
+    deck.style.marginLeft = ((window.innerWidth - 1280 * s) / 2) + 'px'
+    deck.style.marginTop  = ((window.innerHeight - 800 * s) / 2) + 'px'
+  }
+  window.addEventListener('resize', scale); scale()
+
+  const dots = document.getElementById('dots')
+  ORDER.forEach((_, i) => {
+    const d = document.createElement('div')
+    d.className = 'clip-dot'
+    d.onclick = () => show(i)
+    dots.appendChild(d)
+  })
+
+  function show(n) {
+    document.getElementById(ORDER[cur])?.classList.remove('active')
+    cur = Math.max(0, Math.min(n, ORDER.length - 1))
+    const el = document.getElementById(ORDER[cur])
+    el?.classList.add('active')
+    document.getElementById('ctr').textContent = `${cur + 1} / ${ORDER.length}`
+    document.getElementById('progress').style.width = `${(cur + 1) / ORDER.length * 100}%`
+    document.querySelectorAll('.clip-dot').forEach((d, i) => d.classList.toggle('active', i === cur))
+  }
+
+  function nav(d) { show(cur + d) }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nav(1) }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); nav(-1) }
+  })
+
+  show(0)
+</script>
+</body>
+</html>
