@@ -687,6 +687,53 @@ const EXPIRY = {
   tableau:'2026-03', powerbi:'2026-06', figma:'2025-08', adobe:'2026-01'
 };
 
+// ─── 서비스 담당자 / 승인자 ──────────────────
+const SERVICE_OWNERS = {
+  copilot:  { owner:'김태훈', dept:'AI/데이터팀',       approver:'이미래 VP', lastReview:'2025-03' },
+  bedrock:  { owner:'박성진', dept:'AI/데이터팀',       approver:'이미래 VP', lastReview:'2025-01' },
+  vertex:   { owner:'박성진', dept:'AI/데이터팀',       approver:'이미래 VP', lastReview:'2025-01' },
+  aws:      { owner:'최준혁', dept:'클라우드인프라팀',   approver:'신동현 VP', lastReview:'2024-11' },
+  gcp:      { owner:'최준혁', dept:'클라우드인프라팀',   approver:'신동현 VP', lastReview:'2024-11' },
+  github:   { owner:'이상우', dept:'개발플랫폼팀',       approver:'김현수 VP', lastReview:'2025-02' },
+  jira:     { owner:'이상우', dept:'개발플랫폼팀',       approver:'김현수 VP', lastReview:'2025-02' },
+  teams:    { owner:'정유진', dept:'디지털혁신팀',       approver:'신동현 VP', lastReview:'2025-04' },
+  slack:    { owner:'정유진', dept:'디지털혁신팀',       approver:'신동현 VP', lastReview:'2024-12' },
+  zoom:     { owner:'정유진', dept:'디지털혁신팀',       approver:'신동현 VP', lastReview:'2024-12' },
+  notion:   { owner:'한지수', dept:'디지털혁신팀',       approver:'신동현 VP', lastReview:'2025-01' },
+  tableau:  { owner:'강민서', dept:'AI/데이터팀',       approver:'이미래 VP', lastReview:'2025-03' },
+  powerbi:  { owner:'강민서', dept:'AI/데이터팀',       approver:'이미래 VP', lastReview:'2025-03' },
+  figma:    { owner:'임채원', dept:'UX/서비스디자인팀', approver:'신동현 VP', lastReview:'2025-02' },
+  adobe:    { owner:'임채원', dept:'UX/서비스디자인팀', approver:'신동현 VP', lastReview:'2025-02' },
+};
+
+// ─── 라이선스 활용률 ─────────────────────────
+const UTILIZATION = {
+  copilot: { total:200, used:178 }, bedrock: { total:null, used:null },
+  vertex:  { total:null, used:null }, aws: { total:null, used:null },
+  gcp:     { total:null, used:null }, github: { total:140, used:122 },
+  jira:    { total:180, used:141 }, teams: { total:250, used:243 },
+  slack:   { total:230, used:187 }, zoom:  { total:200, used:156 },
+  notion:  { total:160, used:98  }, tableau: { total:60, used:34 },
+  powerbi: { total:80,  used:71  }, figma: { total:50,  used:48 },
+  adobe:   { total:45,  used:39  },
+};
+
+// ─── 예산 편성 근거 ──────────────────────────
+const BUDGET_BASIS = {
+  copilot: { prev:6500000, basis:'라이선스 증설 반영' }, bedrock: { prev:4800000, basis:'신규 프로젝트 수요' },
+  vertex:  { prev:2800000, basis:'신규 프로젝트 수요' }, aws:     { prev:38000000, basis:'인프라 최적화 목표' },
+  gcp:     { prev:19000000, basis:'인프라 최적화 목표' }, github: { prev:1750000, basis:'팀 증가분 반영' },
+  jira:    { prev:1150000, basis:'팀 증가분 반영' }, teams:   { prev:3800000, basis:'사용자 수 기준' },
+  slack:   { prev:2700000, basis:'사용자 수 기준' }, zoom:    { prev:2500000, basis:'사용자 수 기준' },
+  notion:  { prev:950000,  basis:'사용자 수 기준' }, tableau: { prev:2400000, basis:'시각화 수요 증가' },
+  powerbi: { prev:1450000, basis:'기본 유지' }, figma:   { prev:900000,  basis:'기본 유지' },
+  adobe:   { prev:1750000, basis:'기본 유지' },
+};
+
+// ─── 데이터 신선도 ───────────────────────────
+const DATA_LAST_YM = MONTHS[MONTHS.length - 1]?.ym || '2025-06';
+const DATA_UPDATE_LABEL = '데이터 기준: ' + DATA_LAST_YM + ' · 갱신: 매월 10일';
+
 const TEAMS = [
   { id:'ai',    name:'AI/데이터팀',       headcount:45 },
   { id:'cloud', name:'클라우드인프라팀',   headcount:38 },
@@ -939,6 +986,33 @@ function getFilteredBase() {
   return d;
 }
 
+function computeActions(cur, prev) {
+  const actions = [];
+  SERVICES.forEach(s => {
+    const v  = cur.filter(r => r.svc === s.id).reduce((a,r)=>a+r.cost,0);
+    const pv = prev.filter(r => r.svc === s.id).reduce((a,r)=>a+r.cost,0);
+    const owner = SERVICE_OWNERS[s.id];
+    const exp = EXPIRY[s.id];
+    const overBudget = BUDGETS[s.id] && v > BUDGETS[s.id];
+    const mom = pv > 0 ? (v - pv) / pv * 100 : 0;
+    if (overBudget && mom > 25) {
+      actions.push({ pri:'critical', label:'즉시 재협상', svc:s.name, detail:'+'+mom.toFixed(0)+'% · 예산 '+((v/BUDGETS[s.id])*100).toFixed(0)+'% 집행', owner:owner?.owner, approver:owner?.approver, due:'이번 달 내' });
+    } else if (overBudget) {
+      actions.push({ pri:'critical', label:'예산 조정 요청', svc:s.name, detail:'예산 '+((v/BUDGETS[s.id])*100).toFixed(0)+'% 집행', owner:owner?.owner, approver:owner?.approver, due:'이번 달 내' });
+    } else if (mom > 25) {
+      actions.push({ pri:'high', label:'원인 분석 보고서', svc:s.name, detail:'MoM +'+mom.toFixed(0)+'%', owner:owner?.owner, approver:owner?.approver, due:'2주 내' });
+    }
+    if (exp) {
+      const [ey,em] = exp.split('-').map(Number);
+      const diff = (ey-2025)*12+(em-6);
+      if (diff >= 0 && diff <= 3) {
+        actions.push({ pri:'medium', label:'계약 갱신 협상 시작', svc:s.name, detail:'만료: '+exp, owner:owner?.owner, approver:owner?.approver, due:exp+' 전' });
+      }
+    }
+  });
+  return actions.sort((a,b) => ({critical:0,high:1,medium:2}[a.pri] - {critical:0,high:1,medium:2}[b.pri]));
+}
+
 function ci(t) { return '<div class="chart-insight">' + t + '</div>'; }
 
 function renderOverview() {
@@ -1045,15 +1119,29 @@ function renderOverview() {
   const ovCloudCur = sumBy(cur.filter(r => SERVICES.find(s=>s.id===r.svc)?.cat==='클라우드'), 'cost');
   const ovAiPrev = sumBy(prev.filter(r => SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'), 'cost');
   const ovAiMoM = ovAiPrev > 0 ? delta(ovAiCur, ovAiPrev) : 0;
+  const actions = computeActions(cur, prev);
+  const priColor = { critical: T.accent, high: '#efb05d', medium: 'var(--c-text-dim)' };
+  const priLabel = { critical: '즉시', high: '2주 내', medium: '이번 분기' };
+  const actionCards = actions.slice(0, 6).map(a =>
+    '<div style="background:var(--c-surface);border:1px solid var(--c-border);padding:10px 14px;min-width:190px;flex:0 0 auto;">' +
+    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+    '<span style="font-size:9px;font-weight:700;background:' + priColor[a.pri] + ';color:#fff;padding:1px 6px;border-radius:2px">' + priLabel[a.pri] + '</span>' +
+    '<span style="font-size:10px;font-weight:600;color:' + priColor[a.pri] + '">' + a.label + '</span></div>' +
+    '<div style="font-size:12px;font-weight:600;margin-bottom:2px">' + a.svc + '</div>' +
+    '<div style="font-size:10px;color:var(--c-text-muted);margin-bottom:3px">' + a.detail + '</div>' +
+    '<div style="font-size:10px;color:var(--c-text-dim)">담당: <strong>' + (a.owner||'—') + '</strong> &nbsp; 승인: ' + (a.approver||'—') + '</div>' +
+    '</div>'
+  ).join('');
   return `
   <div class="page-header">
     <div class="page-header-top">
       <div><div class="page-title">Overview</div><div class="page-subtitle">2025년 6월 경영 요약 — 즉시 검토 필요 ${overBudgetSvcs.length + expiringSoon.length}건</div></div>
-      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+      <div class="page-refresh">${DATA_UPDATE_LABEL}</div>
     </div>
   </div>
   <div class="page-body">
     ${signalCards}
+    ${actions.length > 0 ? `<div style="margin-bottom:20px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text-dim);margin-bottom:8px;">이번 달 액션 필요 — ${actions.length}건</div><div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">${actionCards}</div></div>` : ''}
     <div class="kpi-row">
       <div class="kpi-main">
         <div class="kpi-label">월 구독 총비용</div>
@@ -1132,14 +1220,23 @@ function renderServices() {
       const diff = (ey - 2025) * 12 + (em - 6);
       return diff >= 0 && diff <= 3;
     })();
+    const owner = SERVICE_OWNERS[s.id];
+    const util = UTILIZATION[s.id];
+    const utilPct = util?.total ? Math.round(util.used / util.total * 100) : null;
+    const basis = BUDGET_BASIS[s.id];
+    const budgetYoY = basis?.prev ? ((BUDGETS[s.id] - basis.prev) / basis.prev * 100).toFixed(0) : null;
     return `<tr style="${overBudget ? 'background:rgba(232,0,13,0.025)' : ''}">
-      <td><strong>${s.label}</strong>${expWarn ? `&nbsp;<span style="font-size:10px;background:${T.accent};color:#fff;padding:1px 5px;font-weight:700;">만료임박</span>` : ''}</td>
+      <td>
+        <strong>${s.label}</strong>${expWarn ? `&nbsp;<span style="font-size:10px;background:${T.accent};color:#fff;padding:1px 5px;font-weight:700;">만료임박</span>` : ''}
+        ${owner ? `<div style="font-size:9px;color:var(--c-text-muted);margin-top:1px">담당: ${owner.owner} · 승인: ${owner.approver}</div>` : ''}
+      </td>
       <td><span class="badge ${CAT_BADGE[s.cat]}">${s.cat}</span></td>
+      <td style="text-align:right;font-size:11px;color:${utilPct === null ? 'var(--c-text-muted)' : utilPct < 70 ? T.accent : T.positive};font-weight:${utilPct !== null && utilPct < 70 ? '600' : '400'}">${utilPct !== null ? utilPct + '%<br><span style="font-size:9px;color:var(--c-text-muted)">' + util.used + '/' + util.total + '석</span>' : '<span style="color:var(--c-text-muted)">API</span>'}</td>
       <td style="text-align:right;font-weight:600">${fmt(s.v)}</td>
       <td style="text-align:right">${fmt(s.pv)}</td>
       <td style="text-align:right;color:${d > 0 ? T.accent : T.positive}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
       <td style="text-align:right;color:${yoyD > 0 ? T.accent : T.positive}">${yoyD > 0 ? '▲' : '▼'} ${Math.abs(yoyD).toFixed(1)}%</td>
-      <td style="text-align:right;color:${overBudget ? T.accent : T.positive};font-weight:${overBudget?'700':'400'}">${budgetPct ? budgetPct+'%' : '—'}</td>
+      <td style="text-align:right;color:${overBudget ? T.accent : T.positive};font-weight:${overBudget?'700':'400'}" title="${basis ? basis.basis + (budgetYoY ? ' · 전년比 '+budgetYoY+'%' : '') : ''}">${budgetPct ? budgetPct+'%' : '—'}${budgetYoY ? `<div style="font-size:9px;color:var(--c-text-muted)">${parseInt(budgetYoY)>=0?'+':''}${budgetYoY}% YoY</div>` : ''}</td>
       <td style="text-align:right;font-size:11px;color:${expWarn ? T.accent : 'var(--c-text-muted)'};font-weight:${expWarn?'600':'400'}">${expiry || '—'}</td>
     </tr>`;
   }).join('');
@@ -1158,7 +1255,7 @@ function renderServices() {
   <div class="page-header">
     <div class="page-header-top">
       <div><div class="page-title">서비스별 현황</div><div class="page-subtitle">2025년 6월 · 예산 대비 · YoY · 계약 만료 포함</div></div>
-      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+      <div class="page-refresh">${DATA_UPDATE_LABEL}</div>
     </div>
   </div>
   <div class="page-body">
@@ -1196,7 +1293,8 @@ function renderServices() {
       ${ci('예산 초과 ' + overBudgetSvcs.length + '개 · 3개월 내 계약 만료 ' + svcExpiring + '개 — 즉시 계약 재검토 및 예산 조정 필요')}
       <table class="data-table">
         <thead><tr>
-          <th>서비스</th><th>카테고리</th>
+          <th>서비스 / 담당</th><th>카테고리</th>
+          <th style="text-align:right">활용률</th>
           <th style="text-align:right">이번 달</th>
           <th style="text-align:right">지난 달</th>
           <th style="text-align:right">MoM</th>
@@ -1461,7 +1559,7 @@ function renderSimulation() {
   <div class="page-header">
     <div class="page-header-top">
       <div><div class="page-title">시뮬레이션 &amp; 예측</div><div class="page-subtitle">계약 협상 시뮬레이터 · Holt 지수평활 예측 · 이상값 탐지</div></div>
-      <div class="page-refresh">2025년 6월 기준 · ML: 순수 JS</div>
+      <div class="page-refresh">${DATA_UPDATE_LABEL} · ML: 순수 JS</div>
     </div>
   </div>
   <div class="page-body">
@@ -1580,14 +1678,20 @@ function selectTeamDrill(teamId) {
     const pv = prev.filter(r => r.svc === s.id).reduce((a, r) => a + r.cost, 0);
     return { id: s.id, name: s.name, cat: s.cat, v, d: !pv ? 0 : ((v - pv) / pv * 100) };
   }).filter(r => r.v > 0).sort((a, b) => b.v - a.v);
-  tbodyEl.innerHTML = rows.map(r =>
-    '<tr>' +
-    '<td><strong>' + r.name + '</strong></td>' +
-    '<td><span class="badge ' + (CAT_BADGE[r.cat] || '') + '">' + r.cat + '</span></td>' +
-    '<td style="text-align:right;font-weight:600">' + fmt(r.v) + '</td>' +
-    '<td style="text-align:right;color:' + (r.d > 0 ? T.accent : T.positive) + '">' + (r.d > 0 ? '▲' : '▼') + ' ' + Math.abs(r.d).toFixed(1) + '%</td>' +
-    '</tr>'
-  ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:16px">데이터 없음</td></tr>';
+  tbodyEl.innerHTML = rows.map(r => {
+    const owner = SERVICE_OWNERS[r.id];
+    const util = UTILIZATION[r.id];
+    const utilPct = util?.total ? Math.round(util.used / util.total * 100) : null;
+    return '<tr>' +
+      '<td><strong>' + r.name + '</strong>' +
+      (owner ? '<div style="font-size:9px;color:var(--c-text-muted)">' + owner.owner + ' · ' + owner.approver + '</div>' : '') +
+      '</td>' +
+      '<td><span class="badge ' + (CAT_BADGE[r.cat] || '') + '">' + r.cat + '</span></td>' +
+      '<td style="text-align:right;font-weight:600">' + fmt(r.v) + '</td>' +
+      '<td style="text-align:right;color:' + (r.d > 0 ? T.accent : T.positive) + '">' + (r.d > 0 ? '▲' : '▼') + ' ' + Math.abs(r.d).toFixed(1) + '%</td>' +
+      (utilPct !== null ? '<td style="text-align:right;font-size:10px;color:' + (utilPct < 70 ? T.accent : T.positive) + '">' + utilPct + '%</td>' : '<td style="text-align:right;font-size:10px;color:var(--c-text-muted)">API</td>') +
+      '</tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--c-text-muted);padding:16px">데이터 없음</td></tr>';
 
   const insightEl = document.getElementById('drill-insight');
   if (insightEl) {
@@ -1673,7 +1777,7 @@ function renderTeams() {
   <div class="page-header">
     <div class="page-header-top">
       <div><div class="page-title">팀별 현황</div><div class="page-subtitle">2025년 6월 · 1인당 비용 · YoY 포함</div></div>
-      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+      <div class="page-refresh">${DATA_UPDATE_LABEL}</div>
     </div>
   </div>
   <div class="page-body">
@@ -1722,12 +1826,13 @@ function renderTeams() {
         <div style="flex:1;overflow-y:auto;max-height:320px;">
           <table class="data-table">
             <thead><tr>
-              <th>서비스</th><th>카테고리</th>
+              <th>서비스 / 담당</th><th>카테고리</th>
               <th style="text-align:right">이번 달</th>
               <th style="text-align:right">MoM</th>
+              <th style="text-align:right">활용률</th>
             </tr></thead>
             <tbody id="drill-tbody">
-              <tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:20px">왼쪽 차트에서 팀 선택</td></tr>
+              <tr><td colspan="5" style="text-align:center;color:var(--c-text-muted);padding:20px">왼쪽 차트에서 팀 선택</td></tr>
             </tbody>
           </table>
         </div>
@@ -1817,7 +1922,7 @@ function renderCost() {
   <div class="page-header">
     <div class="page-header-top">
       <div><div class="page-title">비용분석</div><div class="page-subtitle">구독비용 트렌드 · AI vs 클라우드 · 계약 재검토 대상</div></div>
-      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+      <div class="page-refresh">${DATA_UPDATE_LABEL}</div>
     </div>
   </div>
   <div class="page-body">
