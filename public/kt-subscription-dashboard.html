@@ -386,6 +386,75 @@ body[data-concept="editorial"] .data-table th {
 }
 body[data-concept="editorial"] #main { background: var(--c-bg); }
 body[data-concept="editorial"] .sb-themes { border-top: 2px solid var(--c-border); }
+
+/* ─── CONCEPT: NOTION-BRUTALIST ──────────────────── */
+body[data-concept="notion-brutalist"] #sidebar { border-right: 2px solid var(--c-border); }
+body[data-concept="notion-brutalist"] .page-header {
+  background: transparent;
+  border-bottom: 3px solid var(--c-text);
+  padding: 36px 52px 28px;
+}
+body[data-concept="notion-brutalist"] .page-title {
+  font-size: 32px; font-weight: 800; letter-spacing: -1px;
+}
+body[data-concept="notion-brutalist"] .page-subtitle {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px;
+}
+body[data-concept="notion-brutalist"] .page-body { padding: 36px 52px; }
+body[data-concept="notion-brutalist"] .kpi-row {
+  border: none; border-top: 3px solid var(--c-text);
+  background: transparent; margin-bottom: 36px; gap: 0;
+}
+body[data-concept="notion-brutalist"] .kpi-card {
+  background: transparent; padding: 26px 32px;
+  border-right: 1px solid var(--c-border-sub);
+}
+body[data-concept="notion-brutalist"] .kpi-main {
+  background: transparent; padding: 26px 36px;
+}
+body[data-concept="notion-brutalist"] .kpi-label {
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 10px; font-weight: 700;
+}
+body[data-concept="notion-brutalist"] .kpi-value {
+  font-family: 'Courier New', monospace;
+  font-size: 40px; font-weight: 700; letter-spacing: -2px; margin-top: 4px;
+}
+body[data-concept="notion-brutalist"] .kpi-main .kpi-value { font-size: 52px; }
+body[data-concept="notion-brutalist"] .chart-card {
+  border: none; border-top: 2px solid var(--c-border);
+  background: transparent; padding: 22px 0 28px;
+}
+body[data-concept="notion-brutalist"] .chart-title {
+  font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+}
+body[data-concept="notion-brutalist"] .chart-grid { gap: 36px; margin-bottom: 28px; }
+body[data-concept="notion-brutalist"] .section-divider {
+  margin: 40px 0 24px; border-top: 3px solid var(--c-text);
+  padding-top: 10px; justify-content: flex-start; gap: 0;
+}
+body[data-concept="notion-brutalist"] .section-divider::before,
+body[data-concept="notion-brutalist"] .section-divider::after { display: none; }
+body[data-concept="notion-brutalist"] .section-divider-text {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.14em; font-weight: 800; color: var(--c-text-dim);
+}
+body[data-concept="notion-brutalist"] .trend-card {
+  border: none; border-top: 1px solid var(--c-border-sub);
+  background: transparent; padding: 20px 0;
+}
+body[data-concept="notion-brutalist"] .trend-grid { gap: 0; column-gap: 36px; margin-bottom: 28px; }
+body[data-concept="notion-brutalist"] .trend-item .trend-item-val {
+  font-family: 'Courier New', monospace;
+  font-size: 28px; font-weight: 700; letter-spacing: -1px;
+}
+body[data-concept="notion-brutalist"] .data-table th {
+  background: transparent; border-bottom: 2px solid var(--c-text);
+  font-size: 10px; letter-spacing: 0.1em; font-weight: 800;
+}
+body[data-concept="notion-brutalist"] .data-table td { border-bottom: 1px solid var(--c-border-sub); }
+body[data-concept="notion-brutalist"] #main { background: var(--c-bg); }
+body[data-concept="notion-brutalist"] .sb-nav-item { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -523,6 +592,13 @@ const THEMES = {
     catColors:{'AI도구':'#00E040','클라우드':'#80E880','개발도구':'#50A850','협업':'#347034','BI/디자인':'#204420'},
     teamColors:['#00E040','#80E880','#50A850','#347034','#204420','#162016'],
     chart:{grid:'#1E2E1E',axis:'#1E2E1E',yLabel:'#2E5030',barValue:'#70C070',barName:'#488048'}
+  },
+  notion: {
+    label:'Notion', swatch:'#37352F', concept:'notion-brutalist',
+    vars:{'--c-bg':'#F7F7F5','--c-surface':'#FFFFFF','--c-surface-alt':'#F1F1EE','--c-border':'#37352F','--c-border-sub':'#E9E9E7','--c-text':'#191919','--c-text-sub':'#37352F','--c-text-dim':'#9B9A97','--c-text-muted':'#C7C6C3','--c-accent':'#191919','--c-positive':'#0D7847','--c-hover':'#F1F1EE','--c-border-w':'2px'},
+    catColors:{'AI도구':'#191919','클라우드':'#37352F','개발도구':'#706D68','협업':'#9B9A97','BI/디자인':'#C7C6C3'},
+    teamColors:['#191919','#37352F','#706D68','#9B9A97','#C7C6C3','#E9E9E7'],
+    chart:{grid:'#E9E9E7',axis:'#E9E9E7',yLabel:'#C7C6C3',barValue:'#37352F',barName:'#9B9A97'}
   },
   oxide: {
     label:'Oxide', swatch:'#C46018', concept:'brutalist',
