@@ -1386,6 +1386,82 @@
   </div>
 </div>
 
+<!-- ════ CLAUDE.md vs Design Token 비교 ════ -->
+<div class="slide" id="s-dt-compare">
+  <div class="tb"><span class="tb-cap">Part 2 · Design System — CLAUDE.md vs Design Token</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <!-- CLAUDE.md 방식 -->
+    <div style="flex:1; border-right:1px solid var(--border); padding:28px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(175,152,110,0.9); font-family:monospace; margin-bottom:6px;">방법 A — CLAUDE.md</div>
+        <div style="font-size:20px; font-weight:300; color:#1C1A18; letter-spacing:-0.01em;">자연어로 디자인 규칙을 설명</div>
+      </div>
+      <div class="code-wrap" style="font-size:13px; line-height:1.75; padding:14px 16px; white-space:pre-wrap;"><span style="color:rgba(28,26,24,0.40);"># CLAUDE.md</span>
+색상은 KT 빨간색을 메인으로 사용해줘.
+폰트는 Pretendard, 본문은 읽기 좋게
+넉넉한 줄간격으로 해줘.
+카드는 흰색 배경에 그림자 약하게...</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(175,152,110,0.7); font-family:monospace;">AI 토큰 비용 (세션당)</div>
+        <div style="display:flex; gap:3px; align-items:center;">
+          <div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.85);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div><div style="height:7px; width:11px; background:rgba(196,146,122,0.2);"></div>
+          <span style="font-size:12px; color:rgba(196,146,122,0.9); font-family:monospace; margin-left:8px;">높음 — 파일이 길수록 선형 증가</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.40); font-family:monospace;">주요 단점</div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">매 세션 전체 로드</strong> — CLAUDE.md는 모든 대화 시작마다 컨텍스트에 올라감. 파일이 길수록 비용 증가.</div>
+        </div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">자연어 해석 차이</strong> — "넉넉하게", "약하게"의 기준이 세션마다 달라짐. 일관성 보장 불가.</div>
+        </div>
+        <div style="border:1px solid rgba(122,155,130,0.3); background:rgba(122,155,130,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#8ABFA8; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">빠른 시작</strong> — 코드 없이 텍스트만으로 즉시 작성. 작은 프로젝트엔 여전히 유효.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Design Token 방식 -->
+    <div style="flex:1; padding:28px 40px; display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(122,176,204,0.9); font-family:monospace; margin-bottom:6px;">방법 B — Design Token</div>
+        <div style="font-size:20px; font-weight:300; color:#1C1A18; letter-spacing:-0.01em;">수치를 코드 변수로 직접 정의</div>
+      </div>
+      <div class="code-wrap" style="font-size:13px; line-height:1.75; padding:14px 16px; white-space:pre-wrap;"><span style="color:rgba(28,26,24,0.40);">// theme.js — AI가 이 파일만 참조</span>
+primary:      <span style="color:rgba(122,176,204,0.9);">'#E8000D'</span>
+background:   <span style="color:rgba(122,176,204,0.9);">'#F7F5F2'</span>
+fontFamily:   <span style="color:rgba(122,176,204,0.9);">'Pretendard'</span>
+lineHeight:   <span style="color:rgba(122,176,204,0.9);">1.8</span>
+borderRadius: <span style="color:rgba(122,176,204,0.9);">0</span></div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,176,204,0.7); font-family:monospace;">AI 토큰 비용 (세션당)</div>
+        <div style="display:flex; gap:3px; align-items:center;">
+          <div style="height:7px; width:11px; background:rgba(122,176,204,0.85);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.85);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div><div style="height:7px; width:11px; background:rgba(122,176,204,0.2);"></div>
+          <span style="font-size:12px; color:rgba(122,176,204,0.9); font-family:monospace; margin-left:8px;">낮음 — 파일 크기 일정 유지</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(28,26,24,0.40); font-family:monospace;">장점 / 단점</div>
+        <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#7AB0CC; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">토큰 소비 극소화</strong> — 자연어 설명 없이 코드로 직접 참조. AI가 "읽을" 필요 없음.</div>
+        </div>
+        <div style="border:1px solid rgba(122,176,204,0.3); background:rgba(122,176,204,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#7AB0CC; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">✓</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">100% 일관성</strong> — 같은 변수 참조 = 항상 같은 결과. 해석 차이 없음.</div>
+        </div>
+        <div style="border:1px solid rgba(184,160,112,0.3); background:rgba(184,160,112,0.06); padding:11px 14px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:#C4927A; font-weight:700; flex-shrink:0; font-size:16px; line-height:1.3;">×</span>
+          <div style="font-size:14px; color:rgba(28,26,24,0.72); line-height:1.65;"><strong style="color:#1C1A18;">초기 세팅 필요</strong> — 처음 한 번은 토큰 구조를 잡아야 함. 다음 슬라이드에서 프롬프트로 해결.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════ Design Token 장단점 ════ -->
 <div class="slide" id="s-dt1">
   <div class="tb"><span class="tb-cap">Part 2 · Design Token — 장단점</span><span class="tb-num">— — —</span></div>
@@ -1533,6 +1609,81 @@ error:      <span style="color:rgba(184,160,112,0.9);">'#A1524A'</span></div>
     <div style="border-top:1px solid var(--border); padding-top:13px; display:flex; gap:28px;">
       <div style="font-size:16px; color:rgba(28,26,24,0.66); line-height:1.7;"><span style="font-weight:600; color:rgba(28,26,24,0.6);">주의</span> — 완벽한 체계보다 일단 시작이 중요. 색상 4개로 시작해서 필요할 때 확장.</div>
       <div style="font-size:16px; color:rgba(28,26,24,0.66); line-height:1.7; flex:1;"><span style="font-weight:600; color:rgba(28,26,24,0.6);">다음 단계</span> — 간격(spacing) · 테두리 반경(borderRadius) · 그림자(shadow) 순서로 추가.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token AI 세팅 프롬프트 ════ -->
+<div class="slide" id="s-dt-prompt">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — AI로 30분 안에 세팅하기</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:24px 52px 24px; flex-direction:column; gap:12px;">
+    <div style="flex-shrink:0;">
+      <div class="eyebrow">Claude Code에 복붙하면 끝 — 3가지 시나리오</div>
+      <div class="big-title" style="font-size:36px; margin-bottom:0;">초기 세팅 프롬프트</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; flex:1; min-height:0;">
+      <!-- 프롬프트 1 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(184,160,112,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(184,160,112,0.8); font-family:monospace; margin-bottom:4px;">신규 프로젝트</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">색상값으로 토큰 생성</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">KT 대시보드용 design token
+파일(theme.js)을 만들어줘.
+
+<span style="color:rgba(122,176,204,0.9);">primary: #E8000D
+background: #F7F5F2
+text: #1C1A18
+success: #1e6640
+border: #DDD8D0</span>
+
+MUI createTheme() 형식과
+CSS Custom Properties 둘 다.
+
+CLAUDE.md는 이 파일을
+@참조하는 한 줄로 줄여줘.</div>
+      </div>
+      <!-- 프롬프트 2 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(122,155,130,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,155,130,0.8); font-family:monospace; margin-bottom:4px;">기존 프로젝트</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">CSS에서 토큰 추출</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">아래 CSS에서 반복되는
+색상·폰트·간격 값을 추출해서
+design token으로 변환해줘.
+
+<span style="color:rgba(122,176,204,0.9);">[CSS 파일 내용 붙여넣기]</span>
+
+결과물:
+1. 중복 제거된 토큰 목록
+2. theme.js (MUI 형식)
+3. 기존 CSS를 토큰 참조로
+   대체한 리팩토링 버전</div>
+      </div>
+      <!-- 프롬프트 3 -->
+      <div style="border:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:13px 16px 11px; border-bottom:1px solid var(--border); background:rgba(122,176,204,0.07); flex-shrink:0;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(122,176,204,0.8); font-family:monospace; margin-bottom:4px;">CLAUDE.md → Token 마이그레이션</div>
+          <div style="font-size:15px; font-weight:600; color:#1C1A18;">자연어 규칙을 토큰으로 전환</div>
+        </div>
+        <div class="code-wrap" style="flex:1; border-radius:0; border:none; font-size:12.5px; line-height:1.8; padding:13px 15px; white-space:pre-wrap; overflow-y:auto;">내 CLAUDE.md 디자인 규칙을
+토큰으로 변환해줘.
+
+<span style="color:rgba(122,176,204,0.9);">[CLAUDE.md 내용 붙여넣기]</span>
+
+· 수치화 가능한 것 → theme.js
+· 나머지만 CLAUDE.md에 남기기
+
+목표: CLAUDE.md를 최대한
+짧게 줄여서 토큰 소비 절감.
+새 CLAUDE.md는 theme.js를
+@참조하는 방식으로.</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:11px; display:flex; gap:32px; align-items:center; flex-shrink:0;">
+      <div style="font-size:13px; color:rgba(28,26,24,0.60); line-height:1.65;"><span style="font-weight:600; color:rgba(28,26,24,0.55);">추천 순서</span> — 신규: 프롬프트 1 → 기존 CSS 있음: 프롬프트 2 → CLAUDE.md 이미 있음: 프롬프트 3</div>
+      <div style="font-size:13px; color:rgba(28,26,24,0.60); flex:1;">라이브러리 없을 때도 동일: <code style="font-family:monospace; font-size:12px; background:#EDECEA; padding:1px 5px;">:root { --color-primary: #E8000D; }</code></div>
     </div>
   </div>
 </div>
