@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KT IT기술부문 — 구독 서비스 모니터링 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── DESIGN TOKENS ──────────────────────────────── */
+:root {
+  --c-bg: #F5F5F5;
+  --c-surface: #FFFFFF;
+  --c-surface-alt: #F4F4F4;
+  --c-border: #E0E0E0;
+  --c-border-sub: #F0F0F0;
+  --c-text: #111111;
+  --c-text-sub: #333333;
+  --c-text-dim: #888888;
+  --c-text-muted: #AAAAAA;
+  --c-accent: #E8000D;
+  --c-positive: #1e6640;
+  --c-hover: #F8F8F8;
+  --c-border-w: 1px;
+}
+body {
+  font-family: 'Pretendard', 'Inter', -apple-system, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ─── SIDEBAR ──────────────────────────────────── */
+#sidebar {
+  width: 200px; min-width: 200px;
+  background: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sb-logo { padding: 20px 20px 14px; border-bottom: 1px solid var(--c-border-sub); }
+.sb-logo svg { display: block; }
+.kt-logo-mark { fill: var(--c-text); }
+.kt-logo-accent { fill: #ed1c24; }
+.sb-filters { padding: 16px 16px 8px; border-bottom: 1px solid var(--c-border-sub); }
+.sb-filter-label {
+  font-size: 11px; color: var(--c-text-dim); font-weight: 600;
+  letter-spacing: 0.05em; margin-bottom: 5px; text-transform: uppercase;
+}
+.sb-select {
+  width: 100%; border: 1px solid var(--c-border); padding: 5px 8px;
+  font-size: 12px; color: var(--c-text-sub); background: var(--c-surface);
+  margin-bottom: 12px; cursor: pointer; font-family: inherit; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px;
+}
+.sb-nav { padding: 12px 0; flex: 1; }
+.sb-nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 20px;
+  font-size: 13px; color: var(--c-text-dim); cursor: pointer;
+  transition: background 0.12s; user-select: none;
+}
+.sb-nav-item:hover { background: var(--c-hover); color: var(--c-text); }
+.sb-nav-item.active { color: var(--c-accent); font-weight: 600; background: var(--c-hover); }
+.sb-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c-border); flex-shrink: 0; }
+.sb-nav-item.active .sb-nav-dot { background: var(--c-accent); }
+
+/* ─── THEME SWITCHER ───────────────────────────── */
+.sb-themes { padding: 10px 20px 12px; border-top: 1px solid var(--c-border-sub); }
+.sb-themes-label {
+  font-size: 10px; color: var(--c-text-dim); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 7px;
+}
+.sb-themes-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.theme-swatch {
+  width: 14px; height: 14px; cursor: pointer;
+  border: 1px solid transparent; transition: transform 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+.theme-swatch:hover { transform: scale(1.3); }
+.theme-swatch.active { border-color: var(--c-text) !important; }
+.sb-footer {
+  padding: 10px 20px 14px; font-size: 11px;
+  color: var(--c-text-muted); border-top: 1px solid var(--c-border-sub); line-height: 1.6;
+}
+
+/* ─── MAIN CONTENT ─────────────────────────────── */
+#main { flex: 1; overflow-y: auto; background: var(--c-bg); }
+.page-header {
+  background: var(--c-surface); border-bottom: 1px solid var(--c-border); padding: 18px 32px 14px;
+}
+.page-title { font-size: 22px; font-weight: 600; color: var(--c-text); }
+.page-subtitle { font-size: 12px; color: var(--c-text-dim); margin-top: 3px; }
+.page-refresh { font-size: 11px; color: var(--c-text-muted); }
+.page-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.page-body { padding: 20px 32px; }
+
+/* ─── KPI ROW ──────────────────────────────────── */
+.kpi-row {
+  display: flex; gap: 0; background: var(--c-surface);
+  border: var(--c-border-w) solid var(--c-border); margin-bottom: 20px; overflow: hidden;
+}
+.kpi-card { flex: 1; padding: 18px 24px; border-right: 1px solid var(--c-border); }
+.kpi-card:last-child { border-right: none; }
+.kpi-label { font-size: 12px; color: var(--c-text-dim); margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 700; color: var(--c-text); letter-spacing: -0.5px; }
+.kpi-delta { font-size: 13px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.kpi-delta.up { color: var(--c-accent); }
+.kpi-delta.down { color: var(--c-positive); }
+.kpi-sub { font-size: 11px; color: var(--c-text-muted); margin-top: 3px; }
+.kpi-main { background: var(--c-surface-alt); flex: 1.4; padding: 18px 24px; }
+.kpi-main .kpi-label { font-size: 14px; font-weight: 600; color: var(--c-text-sub); }
+.kpi-main .kpi-value { font-size: 32px; }
+
+/* ─── CHART CARD ───────────────────────────────── */
+.chart-card {
+  background: var(--c-surface);
+  border: var(--c-border-w) solid var(--c-border); padding: 18px 20px; overflow: hidden;
+}
+.chart-title { font-size: 13px; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
+.chart-subtitle { font-size: 11px; color: var(--c-text-muted); margin-bottom: 12px; }
+.chart-grid { display: grid; gap: 16px; margin-bottom: 20px; }
+.chart-grid.col-2 { grid-template-columns: 1fr 1fr; }
+.chart-grid.col-3 { grid-template-columns: 1fr 1fr 1fr; }
+.chart-grid.col-1-2 { grid-template-columns: 1.1fr 2fr; }
+
+/* ─── SECTION DIVIDER ──────────────────────────── */
+.section-divider { display: flex; align-items: center; gap: 16px; margin: 24px 0 16px; }
+.section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--c-border); }
+.section-divider-text { font-size: 14px; font-weight: 700; color: var(--c-text-sub); white-space: nowrap; }
+
+/* ─── TREND CARDS ──────────────────────────────── */
+.trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.trend-card {
+  background: var(--c-surface); border: var(--c-border-w) solid var(--c-border); padding: 16px 20px;
+}
+.trend-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.trend-card-title { font-size: 16px; font-weight: 700; }
+.trend-more { font-size: 11px; color: var(--c-accent); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.trend-items { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trend-item .trend-item-label { font-size: 12px; color: var(--c-text-sub); margin-bottom: 3px; }
+.trend-item .trend-item-sub { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; }
+.trend-item .trend-item-val { font-size: 20px; font-weight: 700; color: var(--c-text); }
+.trend-item .trend-item-delta { font-size: 12px; margin-top: 2px; }
+.trend-item .trend-item-delta.up { color: var(--c-accent); }
+.trend-item .trend-item-delta.down { color: var(--c-positive); }
+
+/* ─── CHART FILTER ─────────────────────────────── */
+.chart-filter-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 8px; }
+.chart-filter-label { font-size: 12px; color: var(--c-text-dim); }
+.chart-filter-select {
+  border: 1px solid var(--c-border); padding: 4px 20px 4px 8px; font-size: 12px;
+  color: var(--c-text-sub); background: var(--c-surface); cursor: pointer; font-family: inherit; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center;
+}
+
+/* ─── LEGEND ───────────────────────────────────── */
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--c-text-sub); }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; flex-shrink: 0; }
+
+/* ─── TABLE ────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.data-table th {
+  background: var(--c-surface-alt); color: var(--c-text-dim); font-weight: 600; text-align: left;
+  padding: 8px 12px; border-bottom: 1px solid var(--c-border);
+  font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--c-border-sub); color: var(--c-text-sub); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--c-hover); }
+.badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 500; }
+.badge-ai   { background: var(--c-surface-alt); color: var(--c-text); font-weight: 600; }
+.badge-cloud { background: var(--c-surface-alt); color: var(--c-text-sub); }
+.badge-dev  { background: var(--c-surface-alt); color: var(--c-text-sub); }
+.badge-collab { background: var(--c-surface-alt); color: var(--c-text-sub); }
+.badge-bi   { background: var(--c-surface-alt); color: var(--c-text-sub); }
+
+svg text { font-family: 'Inter', 'Pretendard', sans-serif; }
+
+/* ═══ CONCEPT LAYERS ════════════════════════════════════════════
+   5 visual concepts overlay on top of the 10 color themes.
+   flat (default) → no extra rules needed.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── CONCEPT: BRUTALIST ───────────────────────── */
+body[data-concept="brutalist"] #sidebar { border-right-width: 2px; }
+body[data-concept="brutalist"] .sb-logo,
+body[data-concept="brutalist"] .sb-filters { border-bottom-width: 2px; }
+body[data-concept="brutalist"] .page-header { border-bottom-width: 2px; }
+body[data-concept="brutalist"] .page-title {
+  font-size: 19px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+body[data-concept="brutalist"] .kpi-row { border-width: 2px; }
+body[data-concept="brutalist"] .kpi-card { border-right-width: 2px; }
+body[data-concept="brutalist"] .kpi-label {
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 10px; font-weight: 800;
+}
+body[data-concept="brutalist"] .kpi-value {
+  font-family: 'Courier New', monospace;
+  font-size: 30px; letter-spacing: -1px;
+}
+body[data-concept="brutalist"] .kpi-main .kpi-value { font-size: 38px; }
+body[data-concept="brutalist"] .chart-card { border-width: 2px; }
+body[data-concept="brutalist"] .trend-card { border-width: 2px; }
+body[data-concept="brutalist"] .chart-title {
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 11px; font-weight: 800;
+}
+body[data-concept="brutalist"] .section-divider::before,
+body[data-concept="brutalist"] .section-divider::after { height: 2px; }
+body[data-concept="brutalist"] .section-divider-text {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800;
+}
+body[data-concept="brutalist"] .data-table th {
+  border-bottom-width: 2px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+}
+body[data-concept="brutalist"] .sb-nav-item {
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px;
+}
+body[data-concept="brutalist"] .trend-item .trend-item-val {
+  font-family: 'Courier New', monospace;
+}
+
+/* ─── CONCEPT: AIRY (weather-app feel) ─────────── */
+body[data-concept="airy"] #main { background: var(--c-bg); }
+body[data-concept="airy"] .page-header {
+  background: transparent; border-bottom: 1px solid var(--c-border-sub);
+  padding: 30px 48px 24px;
+}
+body[data-concept="airy"] .page-title {
+  font-size: 30px; font-weight: 300; letter-spacing: -0.8px;
+}
+body[data-concept="airy"] .page-subtitle { font-size: 13px; margin-top: 5px; }
+body[data-concept="airy"] .page-body { padding: 32px 48px; }
+body[data-concept="airy"] .kpi-row {
+  border: none; background: transparent; gap: 16px; margin-bottom: 28px;
+}
+body[data-concept="airy"] .kpi-card {
+  border: 1px solid var(--c-border-sub); background: var(--c-surface);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.045); padding: 26px 30px;
+  border-right: 1px solid var(--c-border-sub);
+}
+body[data-concept="airy"] .kpi-main {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.045);
+  border: 1px solid var(--c-border-sub); padding: 28px 34px;
+}
+body[data-concept="airy"] .kpi-label {
+  font-size: 13px; font-weight: 400; letter-spacing: 0; margin-bottom: 8px;
+}
+body[data-concept="airy"] .kpi-value {
+  font-size: 44px; font-weight: 300; letter-spacing: -2px;
+}
+body[data-concept="airy"] .kpi-main .kpi-value {
+  font-size: 54px; letter-spacing: -3px;
+}
+body[data-concept="airy"] .kpi-delta { font-size: 14px; margin-top: 6px; }
+body[data-concept="airy"] .chart-card {
+  border: 1px solid var(--c-border-sub);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.045); padding: 26px 30px;
+}
+body[data-concept="airy"] .chart-title { font-size: 15px; font-weight: 500; }
+body[data-concept="airy"] .chart-grid { gap: 20px; margin-bottom: 24px; }
+body[data-concept="airy"] .trend-card {
+  border: 1px solid var(--c-border-sub);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.045); padding: 26px 28px;
+}
+body[data-concept="airy"] .trend-grid { gap: 20px; margin-bottom: 28px; }
+body[data-concept="airy"] .trend-item .trend-item-val {
+  font-size: 28px; font-weight: 300; letter-spacing: -1px;
+}
+body[data-concept="airy"] .section-divider { margin: 40px 0 28px; }
+body[data-concept="airy"] .section-divider-text { font-size: 13px; font-weight: 400; }
+body[data-concept="airy"] .section-divider::before,
+body[data-concept="airy"] .section-divider::after { background: var(--c-border-sub); }
+
+/* ─── CONCEPT: TERMINAL ─────────────────────────── */
+body[data-concept="terminal"] *,
+body[data-concept="terminal"] svg text {
+  font-family: 'Courier New', 'Menlo', monospace !important;
+}
+body[data-concept="terminal"] .page-header { padding: 14px 24px 12px; }
+body[data-concept="terminal"] .page-title {
+  font-size: 14px; font-weight: 400;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+body[data-concept="terminal"] .page-title::before { content: '> '; color: var(--c-accent); }
+body[data-concept="terminal"] .page-subtitle { font-size: 11px; }
+body[data-concept="terminal"] .page-body { padding: 14px 24px; }
+body[data-concept="terminal"] .kpi-row { margin-bottom: 14px; }
+body[data-concept="terminal"] .kpi-card { padding: 14px 18px; }
+body[data-concept="terminal"] .kpi-main { padding: 14px 20px; }
+body[data-concept="terminal"] .kpi-label { font-size: 11px; }
+body[data-concept="terminal"] .kpi-label::before { content: '# '; opacity: 0.45; }
+body[data-concept="terminal"] .kpi-value {
+  font-size: 26px; letter-spacing: -1px;
+}
+body[data-concept="terminal"] .kpi-main .kpi-value { font-size: 32px; }
+body[data-concept="terminal"] .chart-card { padding: 14px 16px; }
+body[data-concept="terminal"] .chart-title::before { content: '$ '; color: var(--c-accent); }
+body[data-concept="terminal"] .chart-title { font-size: 12px; }
+body[data-concept="terminal"] .chart-grid { gap: 10px; margin-bottom: 14px; }
+body[data-concept="terminal"] .section-divider { margin: 18px 0 12px; }
+body[data-concept="terminal"] .section-divider::before,
+body[data-concept="terminal"] .section-divider::after {
+  background: none; border-top: 1px dashed var(--c-border); height: 0;
+}
+body[data-concept="terminal"] .section-divider-text {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+}
+body[data-concept="terminal"] .trend-card { padding: 10px 14px; }
+body[data-concept="terminal"] .trend-grid { gap: 10px; margin-bottom: 14px; }
+body[data-concept="terminal"] .trend-item .trend-item-val { font-size: 18px; }
+body[data-concept="terminal"] .data-table td { padding: 7px 12px; }
+
+/* ─── CONCEPT: EDITORIAL ────────────────────────── */
+body[data-concept="editorial"] .page-header {
+  background: transparent; border-bottom: 2px solid var(--c-text);
+  padding: 26px 44px 20px;
+}
+body[data-concept="editorial"] .page-title {
+  font-size: 32px; font-weight: 800; letter-spacing: -1.5px;
+}
+body[data-concept="editorial"] .page-subtitle {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em; margin-top: 8px;
+}
+body[data-concept="editorial"] .page-body { padding: 30px 44px; }
+body[data-concept="editorial"] .kpi-row {
+  border: none; border-top: 3px solid var(--c-text);
+  background: transparent; margin-bottom: 0;
+}
+body[data-concept="editorial"] .kpi-card {
+  background: transparent; padding: 22px 28px;
+}
+body[data-concept="editorial"] .kpi-main {
+  background: transparent; padding: 22px 32px;
+}
+body[data-concept="editorial"] .kpi-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.12em; font-weight: 700;
+}
+body[data-concept="editorial"] .kpi-value {
+  font-size: 38px; font-weight: 300; letter-spacing: -2px;
+}
+body[data-concept="editorial"] .kpi-main .kpi-value {
+  font-size: 48px; letter-spacing: -3px;
+}
+body[data-concept="editorial"] .chart-card {
+  border: none; border-top: 1px solid var(--c-border);
+  background: transparent; padding: 20px 0 24px;
+}
+body[data-concept="editorial"] .chart-title {
+  font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+}
+body[data-concept="editorial"] .chart-grid { gap: 32px; margin-bottom: 24px; }
+body[data-concept="editorial"] .trend-card {
+  border: none; border-top: 1px solid var(--c-border);
+  background: transparent; padding: 18px 0;
+}
+body[data-concept="editorial"] .trend-grid { gap: 0; column-gap: 32px; margin-bottom: 24px; }
+body[data-concept="editorial"] .trend-item .trend-item-val {
+  font-size: 28px; font-weight: 300; letter-spacing: -1px;
+}
+body[data-concept="editorial"] .section-divider {
+  margin: 36px 0 20px; justify-content: flex-start;
+}
+body[data-concept="editorial"] .section-divider::before { display: none; }
+body[data-concept="editorial"] .section-divider::after { display: none; }
+body[data-concept="editorial"] .section-divider-text {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.14em; font-weight: 700;
+  color: var(--c-text-dim); padding-bottom: 0;
+}
+body[data-concept="editorial"] .data-table th {
+  background: transparent; border-bottom: 2px solid var(--c-text);
+  font-size: 10px; letter-spacing: 0.1em; font-weight: 700;
+}
+body[data-concept="editorial"] #main { background: var(--c-bg); }
+body[data-concept="editorial"] .sb-themes { border-top: 2px solid var(--c-border); }
+
+/* ─── CONCEPT: NOTION-BRUTALIST ──────────────────── */
+body[data-concept="notion-brutalist"] #sidebar { border-right: 2px solid var(--c-border); }
+body[data-concept="notion-brutalist"] .page-header {
+  background: transparent;
+  border-bottom: 3px solid var(--c-text);
+  padding: 36px 52px 28px;
+}
+body[data-concept="notion-brutalist"] .page-title {
+  font-size: 32px; font-weight: 800; letter-spacing: -1px;
+}
+body[data-concept="notion-brutalist"] .page-subtitle {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px;
+}
+body[data-concept="notion-brutalist"] .page-body { padding: 36px 52px; }
+body[data-concept="notion-brutalist"] .kpi-row {
+  border: none; border-top: 3px solid var(--c-text);
+  background: transparent; margin-bottom: 36px; gap: 0;
+}
+body[data-concept="notion-brutalist"] .kpi-card {
+  background: transparent; padding: 26px 32px;
+  border-right: 1px solid var(--c-border-sub);
+}
+body[data-concept="notion-brutalist"] .kpi-main {
+  background: transparent; padding: 26px 36px;
+}
+body[data-concept="notion-brutalist"] .kpi-label {
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 10px; font-weight: 700;
+}
+body[data-concept="notion-brutalist"] .kpi-value {
+  font-family: 'Courier New', monospace;
+  font-size: 40px; font-weight: 700; letter-spacing: -2px; margin-top: 4px;
+}
+body[data-concept="notion-brutalist"] .kpi-main .kpi-value { font-size: 52px; }
+body[data-concept="notion-brutalist"] .chart-card {
+  border: none; border-top: 2px solid var(--c-border);
+  background: transparent; padding: 22px 0 28px;
+}
+body[data-concept="notion-brutalist"] .chart-title {
+  font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+}
+body[data-concept="notion-brutalist"] .chart-grid { gap: 36px; margin-bottom: 28px; }
+body[data-concept="notion-brutalist"] .section-divider {
+  margin: 40px 0 24px; border-top: 3px solid var(--c-text);
+  padding-top: 10px; justify-content: flex-start; gap: 0;
+}
+body[data-concept="notion-brutalist"] .section-divider::before,
+body[data-concept="notion-brutalist"] .section-divider::after { display: none; }
+body[data-concept="notion-brutalist"] .section-divider-text {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.14em; font-weight: 800; color: var(--c-text-dim);
+}
+body[data-concept="notion-brutalist"] .trend-card {
+  border: none; border-top: 1px solid var(--c-border-sub);
+  background: transparent; padding: 20px 0;
+}
+body[data-concept="notion-brutalist"] .trend-grid { gap: 0; column-gap: 36px; margin-bottom: 28px; }
+body[data-concept="notion-brutalist"] .trend-item .trend-item-val {
+  font-family: 'Courier New', monospace;
+  font-size: 28px; font-weight: 700; letter-spacing: -1px;
+}
+body[data-concept="notion-brutalist"] .data-table th {
+  background: transparent; border-bottom: 2px solid var(--c-text);
+  font-size: 10px; letter-spacing: 0.1em; font-weight: 800;
+}
+body[data-concept="notion-brutalist"] .data-table td { border-bottom: 1px solid var(--c-border-sub); }
+body[data-concept="notion-brutalist"] #main { background: var(--c-bg); }
+body[data-concept="notion-brutalist"] .sb-nav-item { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sb-logo">
+    <svg width="56" height="46" viewBox="0 0 69.73 56.89" xmlns="http://www.w3.org/2000/svg">
+      <path class="kt-logo-mark" d="M22.25,33.92l16.05-19.75h-8.75c-3.93,0-6.62,1.2-9.01,3.99l-8.45,10.39V0H3.61C1.62,0,0,1.62,0,3.62v53.27h8.48c2,0,3.61-1.62,3.61-3.62v-14.17l6.87,8.43,5.84,7.19c1.18,1.48,2.73,2.16,4.32,2.16h11.83l-7.65-9.39-11.05-13.58ZM59.34,46.84c-1.78,0-3.24-1.46-3.24-3.25V0h-8.48c-1.99,0-3.62,1.62-3.62,3.61v42.25c0,6.53,4.51,11.03,11.04,11.03h9.32c2,0,3.62-1.62,3.62-3.62v-6.44h-8.64Z"/>
+      <path class="kt-logo-accent" d="M13.24,27.1l.02-.02s-.01.01-.03.02h0ZM69.73,19.04v-8.02s-.75.79-.75.79c-.03.01-2.3,2.33-8.82,2.33h-30.83c-4.87,0-7.17,1.98-8.91,4.13l-.95,1.17s-.06.07-.09.1l-6.12,7.53c2.23-1.68,5.27-2.69,8.38-2.69h38.51c4.67,0,9.16-1.37,9.53-4.87.05-.29.04-.47.04-.47Z"/>
+    </svg>
+    <div style="font-size:10px;color:var(--c-text-muted);margin-top:3px;letter-spacing:0.05em;text-transform:uppercase;">IT기술부문</div>
+  </div>
+
+  <div class="sb-filters">
+    <div class="sb-filter-label">기간</div>
+    <select class="sb-select" id="filter-period" onchange="applyFilters()">
+      <option value="month">월간</option>
+      <option value="quarter">분기</option>
+    </select>
+    <div class="sb-filter-label">카테고리</div>
+    <select class="sb-select" id="filter-category" onchange="applyFilters()">
+      <option value="all">(전체)</option>
+      <option value="AI도구">AI 도구</option>
+      <option value="클라우드">클라우드</option>
+      <option value="개발도구">개발 도구</option>
+      <option value="협업">협업</option>
+      <option value="BI/디자인">BI / 디자인</option>
+    </select>
+    <div class="sb-filter-label">팀/부서</div>
+    <select class="sb-select" id="filter-team" onchange="applyFilters()">
+      <option value="all">(전체)</option>
+      <option value="AI/데이터팀">AI/데이터팀</option>
+      <option value="클라우드인프라팀">클라우드인프라팀</option>
+      <option value="개발플랫폼팀">개발플랫폼팀</option>
+      <option value="디지털혁신팀">디지털혁신팀</option>
+      <option value="보안/운영팀">보안/운영팀</option>
+      <option value="UX/서비스디자인팀">UX/서비스디자인팀</option>
+    </select>
+  </div>
+
+  <nav class="sb-nav" id="sb-nav">
+    <div class="sb-nav-item active" data-tab="overview" onclick="navigate('overview')">
+      <span class="sb-nav-dot"></span> Overview
+    </div>
+    <div class="sb-nav-item" data-tab="services" onclick="navigate('services')">
+      <span class="sb-nav-dot"></span> 서비스별
+    </div>
+    <div class="sb-nav-item" data-tab="teams" onclick="navigate('teams')">
+      <span class="sb-nav-dot"></span> 팀별
+    </div>
+    <div class="sb-nav-item" data-tab="cost" onclick="navigate('cost')">
+      <span class="sb-nav-dot"></span> 비용분석
+    </div>
+  </nav>
+
+  <div class="sb-themes">
+    <div class="sb-themes-label">Theme</div>
+    <div class="sb-themes-grid" id="theme-grid"></div>
+  </div>
+
+  <div class="sb-footer">
+    데이터 기준: 2025년 6월<br>
+    AI 파이프라인 자동 생성
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+  <div id="page-content"></div>
+</main>
+
+<script>
+// ─── THEME SYSTEM ─────────────────────────────────────────────────
+const THEMES = {
+  kt: {
+    label:'KT', swatch:'#E8000D', concept:'flat',
+    vars:{'--c-bg':'#F5F5F5','--c-surface':'#FFFFFF','--c-surface-alt':'#F4F4F4','--c-border':'#E0E0E0','--c-border-sub':'#F0F0F0','--c-text':'#111111','--c-text-sub':'#333333','--c-text-dim':'#888888','--c-text-muted':'#AAAAAA','--c-accent':'#E8000D','--c-positive':'#1e6640','--c-hover':'#F8F8F8','--c-border-w':'1px'},
+    catColors:{'AI도구':'#E8000D','클라우드':'#2A2A2A','개발도구':'#606060','협업':'#909090','BI/디자인':'#B8B8B8'},
+    teamColors:['#E8000D','#2A2A2A','#555555','#888888','#AAAAAA','#CCCCCC'],
+    chart:{grid:'#F0F0F0',axis:'#E8E8E8',yLabel:'#BBBBBB',barValue:'#555555',barName:'#AAAAAA'}
+  },
+  brutalist: {
+    label:'Brutalist', swatch:'#111111', concept:'brutalist',
+    vars:{'--c-bg':'#FFFFFF','--c-surface':'#FFFFFF','--c-surface-alt':'#EEEEEE','--c-border':'#111111','--c-border-sub':'#BBBBBB','--c-text':'#000000','--c-text-sub':'#111111','--c-text-dim':'#444444','--c-text-muted':'#666666','--c-accent':'#000000','--c-positive':'#005500','--c-hover':'#F0F0F0','--c-border-w':'2px'},
+    catColors:{'AI도구':'#000000','클라우드':'#222222','개발도구':'#555555','협업':'#888888','BI/디자인':'#BBBBBB'},
+    teamColors:['#000000','#222222','#444444','#666666','#888888','#AAAAAA'],
+    chart:{grid:'#CCCCCC',axis:'#888888',yLabel:'#444444',barValue:'#222222',barName:'#555555'}
+  },
+  minimal: {
+    label:'Minimal', swatch:'#CCCCCC', concept:'airy',
+    vars:{'--c-bg':'#F9F9F9','--c-surface':'#FFFFFF','--c-surface-alt':'#F5F5F5','--c-border':'#EBEBEB','--c-border-sub':'#F3F3F3','--c-text':'#1A1A1A','--c-text-sub':'#444444','--c-text-dim':'#999999','--c-text-muted':'#CCCCCC','--c-accent':'#1A1A1A','--c-positive':'#2D7A52','--c-hover':'#F5F5F5','--c-border-w':'1px'},
+    catColors:{'AI도구':'#1A1A1A','클라우드':'#555555','개발도구':'#888888','협업':'#BBBBBB','BI/디자인':'#DDDDDD'},
+    teamColors:['#1A1A1A','#444444','#666666','#888888','#AAAAAA','#CCCCCC'],
+    chart:{grid:'#F0F0F0',axis:'#E8E8E8',yLabel:'#CCCCCC',barValue:'#888888',barName:'#BBBBBB'}
+  },
+  dark: {
+    label:'Dark', swatch:'#1A1A1A', concept:'terminal',
+    vars:{'--c-bg':'#111111','--c-surface':'#1A1A1A','--c-surface-alt':'#252525','--c-border':'#2E2E2E','--c-border-sub':'#242424','--c-text':'#E8E8E8','--c-text-sub':'#C0C0C0','--c-text-dim':'#888888','--c-text-muted':'#555555','--c-accent':'#E8000D','--c-positive':'#2EA56A','--c-hover':'#242424','--c-border-w':'1px'},
+    catColors:{'AI도구':'#E8000D','클라우드':'#E0E0E0','개발도구':'#909090','협업':'#606060','BI/디자인':'#404040'},
+    teamColors:['#E8000D','#E0E0E0','#AAAAAA','#777777','#555555','#333333'],
+    chart:{grid:'#2E2E2E',axis:'#3A3A3A',yLabel:'#555555',barValue:'#888888',barName:'#555555'}
+  },
+  navy: {
+    label:'Navy', swatch:'#1A4D8C', concept:'editorial',
+    vars:{'--c-bg':'#EEF2F7','--c-surface':'#FFFFFF','--c-surface-alt':'#E3EAF4','--c-border':'#C8D8E8','--c-border-sub':'#DCE6F0','--c-text':'#0A1F3A','--c-text-sub':'#1E3A5F','--c-text-dim':'#4D7099','--c-text-muted':'#8AAAC4','--c-accent':'#1A4D8C','--c-positive':'#1A6642','--c-hover':'#DCE6F0','--c-border-w':'1px'},
+    catColors:{'AI도구':'#1A4D8C','클라우드':'#2C6AAD','개발도구':'#4A88CA','협업':'#7AAEDF','BI/디자인':'#AACCE8'},
+    teamColors:['#1A4D8C','#2C6AAD','#4A88CA','#7AAEDF','#AACCE8','#D0E4F4'],
+    chart:{grid:'#DCE6F0',axis:'#C8D8E8',yLabel:'#8AAAC4',barValue:'#1E3A5F',barName:'#4D7099'}
+  },
+  sage: {
+    label:'Sage', swatch:'#356C3A', concept:'airy',
+    vars:{'--c-bg':'#F2F5F0','--c-surface':'#FFFFFF','--c-surface-alt':'#E8EEE4','--c-border':'#C8D8C4','--c-border-sub':'#DCE8D8','--c-text':'#1A2E1C','--c-text-sub':'#2D4A30','--c-text-dim':'#5A7A5E','--c-text-muted':'#8AA88E','--c-accent':'#356C3A','--c-positive':'#356C3A','--c-hover':'#E5EDE0','--c-border-w':'1px'},
+    catColors:{'AI도구':'#356C3A','클라우드':'#4A8A50','개발도구':'#6BAB72','협업':'#96C89C','BI/디자인':'#C4DEC7'},
+    teamColors:['#356C3A','#4A8A50','#6BAB72','#96C89C','#C4DEC7','#E0EEE2'],
+    chart:{grid:'#DCE8D8',axis:'#C8D8C4',yLabel:'#8AA88E',barValue:'#2D4A30',barName:'#5A7A5E'}
+  },
+  warm: {
+    label:'Warm', swatch:'#8B5520', concept:'airy',
+    vars:{'--c-bg':'#F5F0E8','--c-surface':'#FAF7F2','--c-surface-alt':'#EDE8DC','--c-border':'#D8D0C0','--c-border-sub':'#E8E2D5','--c-text':'#2A2018','--c-text-sub':'#4A3A28','--c-text-dim':'#7A6A55','--c-text-muted':'#A89A85','--c-accent':'#8B5520','--c-positive':'#3D6335','--c-hover':'#EDE5D5','--c-border-w':'1px'},
+    catColors:{'AI도구':'#8B5520','클라우드':'#A06A35','개발도구':'#C89050','협업':'#E0B880','BI/디자인':'#F2D5B0'},
+    teamColors:['#8B5520','#A06A35','#C89050','#E0B880','#F2D5B0','#F8EDD8'],
+    chart:{grid:'#E8E2D5',axis:'#D8D0C0',yLabel:'#A89A85',barValue:'#4A3A28',barName:'#7A6A55'}
+  },
+  slate: {
+    label:'Slate', swatch:'#2663A8', concept:'editorial',
+    vars:{'--c-bg':'#F0F2F5','--c-surface':'#FFFFFF','--c-surface-alt':'#E4EAF3','--c-border':'#C8D4E0','--c-border-sub':'#DCE4ED','--c-text':'#1A2535','--c-text-sub':'#2D3E52','--c-text-dim':'#5A7090','--c-text-muted':'#8AA0BA','--c-accent':'#2663A8','--c-positive':'#1A6040','--c-hover':'#DCE4F0','--c-border-w':'1px'},
+    catColors:{'AI도구':'#2663A8','클라우드':'#3A7EC5','개발도구':'#5E9FD8','협업':'#8EC0E8','BI/디자인':'#BADEF5'},
+    teamColors:['#2663A8','#3A7EC5','#5E9FD8','#8EC0E8','#BADEF5','#D8EEF8'],
+    chart:{grid:'#DCE4ED',axis:'#C8D4E0',yLabel:'#8AA0BA',barValue:'#2D3E52',barName:'#5A7090'}
+  },
+  terminal: {
+    label:'Terminal', swatch:'#00E040', concept:'terminal',
+    vars:{'--c-bg':'#0A0E0A','--c-surface':'#111811','--c-surface-alt':'#162016','--c-border':'#1E2E1E','--c-border-sub':'#162016','--c-text':'#A8E8A8','--c-text-sub':'#70C070','--c-text-dim':'#488048','--c-text-muted':'#2E5030','--c-accent':'#00E040','--c-positive':'#00E040','--c-hover':'#182018','--c-border-w':'1px'},
+    catColors:{'AI도구':'#00E040','클라우드':'#80E880','개발도구':'#50A850','협업':'#347034','BI/디자인':'#204420'},
+    teamColors:['#00E040','#80E880','#50A850','#347034','#204420','#162016'],
+    chart:{grid:'#1E2E1E',axis:'#1E2E1E',yLabel:'#2E5030',barValue:'#70C070',barName:'#488048'}
+  },
+  notion: {
+    label:'Notion', swatch:'#37352F', concept:'notion-brutalist',
+    vars:{'--c-bg':'#F7F7F5','--c-surface':'#FFFFFF','--c-surface-alt':'#F1F1EE','--c-border':'#37352F','--c-border-sub':'#E9E9E7','--c-text':'#191919','--c-text-sub':'#37352F','--c-text-dim':'#9B9A97','--c-text-muted':'#C7C6C3','--c-accent':'#191919','--c-positive':'#0D7847','--c-hover':'#F1F1EE','--c-border-w':'2px'},
+    catColors:{'AI도구':'#191919','클라우드':'#37352F','개발도구':'#706D68','협업':'#9B9A97','BI/디자인':'#C7C6C3'},
+    teamColors:['#191919','#37352F','#706D68','#9B9A97','#C7C6C3','#E9E9E7'],
+    chart:{grid:'#E9E9E7',axis:'#E9E9E7',yLabel:'#C7C6C3',barValue:'#37352F',barName:'#9B9A97'}
+  },
+  oxide: {
+    label:'Oxide', swatch:'#C46018', concept:'brutalist',
+    vars:{'--c-bg':'#F2ECE4','--c-surface':'#FAF8F5','--c-surface-alt':'#EDE4D8','--c-border':'#CCC2B0','--c-border-sub':'#DDD5C8','--c-text':'#2A1E10','--c-text-sub':'#4A3820','--c-text-dim':'#7A6555','--c-text-muted':'#A89580','--c-accent':'#C46018','--c-positive':'#2E6040','--c-hover':'#E5DDD0','--c-border-w':'1px'},
+    catColors:{'AI도구':'#C46018','클라우드':'#E07028','개발도구':'#F09050','협업':'#F5B880','BI/디자인':'#FAD8B0'},
+    teamColors:['#C46018','#E07028','#F09050','#F5B880','#FAD8B0','#FDE8D0'],
+    chart:{grid:'#DDD5C8',axis:'#CCC2B0',yLabel:'#A89580',barValue:'#4A3820',barName:'#7A6555'}
+  }
+};
+
+let currentTheme = 'kt';
+let CAT_COLORS = { ...THEMES.kt.catColors };
+let CHART = { ...THEMES.kt.chart };
+let T = { accent: THEMES.kt.vars['--c-accent'], positive: THEMES.kt.vars['--c-positive'] };
+
+function applyTheme(name) {
+  currentTheme = name;
+  const t = THEMES[name];
+  const root = document.documentElement;
+  Object.entries(t.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  CAT_COLORS = { ...t.catColors };
+  CHART = { ...t.chart };
+  T = { accent: t.vars['--c-accent'], positive: t.vars['--c-positive'] };
+  document.body.dataset.concept = t.concept || 'flat';
+  document.querySelectorAll('.theme-swatch').forEach(el =>
+    el.classList.toggle('active', el.dataset.theme === name)
+  );
+  renderPage();
+}
+
+function buildThemeSwitcher() {
+  const grid = document.getElementById('theme-grid');
+  Object.entries(THEMES).forEach(([key, t]) => {
+    const el = document.createElement('div');
+    el.className = 'theme-swatch' + (key === currentTheme ? ' active' : '');
+    el.dataset.theme = key;
+    el.title = t.label;
+    el.style.background = t.swatch;
+    el.onclick = () => applyTheme(key);
+    grid.appendChild(el);
+  });
+}
+
+// ─── DATA ────────────────────────────────────────────────────────
+const CATEGORIES = ['AI도구', '클라우드', '개발도구', '협업', 'BI/디자인'];
+const CAT_BADGE  = { 'AI도구':'badge-ai','클라우드':'badge-cloud','개발도구':'badge-dev','협업':'badge-collab','BI/디자인':'badge-bi' };
+
+const SERVICES = [
+  { id:'copilot',  name:'MS Copilot',       cat:'AI도구',    base:7200000,  aiTokens:true },
+  { id:'bedrock',  name:'AWS Bedrock',       cat:'AI도구',    base:4800000,  aiTokens:true },
+  { id:'vertex',   name:'GCP Vertex AI',    cat:'AI도구',    base:3100000,  aiTokens:true },
+  { id:'aws',      name:'AWS 인프라',        cat:'클라우드',  base:42000000, aiTokens:false },
+  { id:'gcp',      name:'GCP 인프라',        cat:'클라우드',  base:21000000, aiTokens:false },
+  { id:'github',   name:'GitHub Ent.',      cat:'개발도구',  base:1800000,  aiTokens:false },
+  { id:'jira',     name:'Jira + Confluence',cat:'개발도구',  base:1200000,  aiTokens:false },
+  { id:'teams',    name:'MS Teams',         cat:'협업',      base:3800000,  aiTokens:false },
+  { id:'slack',    name:'Slack',            cat:'협업',      base:2900000,  aiTokens:false },
+  { id:'zoom',     name:'Zoom',             cat:'협업',      base:2400000,  aiTokens:false },
+  { id:'notion',   name:'Notion',           cat:'협업',      base:1100000,  aiTokens:false },
+  { id:'tableau',  name:'Tableau',          cat:'BI/디자인', base:2600000,  aiTokens:false },
+  { id:'powerbi',  name:'Power BI',         cat:'BI/디자인', base:1400000,  aiTokens:false },
+  { id:'figma',    name:'Figma',            cat:'BI/디자인', base:900000,   aiTokens:false },
+  { id:'adobe',    name:'Adobe CC',         cat:'BI/디자인', base:1800000,  aiTokens:false },
+];
+
+// ─── BUDGET & EXPIRY ─────────────────────────────
+const BUDGETS = {
+  copilot:7000000, bedrock:5500000, vertex:3000000,
+  aws:40000000, gcp:20000000, github:1800000, jira:1200000,
+  teams:4000000, slack:2800000, zoom:2500000, notion:1000000,
+  tableau:2500000, powerbi:1500000, figma:950000, adobe:1800000
+};
+const EXPIRY = {
+  copilot:'2026-03', bedrock:'2025-08', vertex:'2025-09',
+  aws:'2026-06', gcp:'2026-06', github:'2025-08', jira:'2026-01',
+  teams:'2026-03', slack:'2025-09', zoom:'2026-06', notion:'2025-08',
+  tableau:'2026-03', powerbi:'2026-06', figma:'2025-08', adobe:'2026-01'
+};
+
+const TEAMS = [
+  { id:'ai',    name:'AI/데이터팀',       headcount:45 },
+  { id:'cloud', name:'클라우드인프라팀',   headcount:38 },
+  { id:'dev',   name:'개발플랫폼팀',       headcount:52 },
+  { id:'dx',    name:'디지털혁신팀',       headcount:35 },
+  { id:'sec',   name:'보안/운영팀',        headcount:28 },
+  { id:'ux',    name:'UX/서비스디자인팀',  headcount:22 },
+];
+
+const TEAM_WEIGHTS = {
+  copilot: {ai:0.28,cloud:0.14,dev:0.22,dx:0.18,sec:0.10,ux:0.08},
+  bedrock: {ai:0.45,cloud:0.25,dev:0.18,dx:0.08,sec:0.03,ux:0.01},
+  vertex:  {ai:0.40,cloud:0.30,dev:0.15,dx:0.10,sec:0.03,ux:0.02},
+  aws:     {ai:0.18,cloud:0.40,dev:0.24,dx:0.10,sec:0.06,ux:0.02},
+  gcp:     {ai:0.22,cloud:0.35,dev:0.28,dx:0.08,sec:0.05,ux:0.02},
+  github:  {ai:0.15,cloud:0.10,dev:0.55,dx:0.12,sec:0.06,ux:0.02},
+  jira:    {ai:0.16,cloud:0.12,dev:0.42,dx:0.18,sec:0.08,ux:0.04},
+  teams:   {ai:0.18,cloud:0.18,dev:0.20,dx:0.18,sec:0.12,ux:0.14},
+  slack:   {ai:0.20,cloud:0.15,dev:0.28,dx:0.18,sec:0.10,ux:0.09},
+  zoom:    {ai:0.17,cloud:0.17,dev:0.17,dx:0.17,sec:0.16,ux:0.16},
+  notion:  {ai:0.22,cloud:0.12,dev:0.25,dx:0.24,sec:0.08,ux:0.09},
+  tableau: {ai:0.30,cloud:0.15,dev:0.10,dx:0.28,sec:0.10,ux:0.07},
+  powerbi: {ai:0.25,cloud:0.10,dev:0.10,dx:0.35,sec:0.12,ux:0.08},
+  figma:   {ai:0.05,cloud:0.04,dev:0.12,dx:0.16,sec:0.02,ux:0.61},
+  adobe:   {ai:0.06,cloud:0.04,dev:0.08,dx:0.18,sec:0.02,ux:0.62},
+};
+
+function seededRand(seed) {
+  let s = seed;
+  return function() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+}
+
+function genMonths() {
+  const m = [];
+  for (let y = 2024; y <= 2025; y++) for (let mo = 1; mo <= 12; mo++) {
+    if (y === 2025 && mo > 6) break;
+    m.push({ ym: `${y}-${String(mo).padStart(2,'0')}`, y, mo });
+  }
+  return m;
+}
+const MONTHS = genMonths();
+
+const DATA = [];
+(function buildData() {
+  const rand = seededRand(42);
+  MONTHS.forEach((m, mi) => {
+    SERVICES.forEach(svc => {
+      TEAMS.forEach(team => {
+        const w = TEAM_WEIGHTS[svc.id][team.id];
+        const aiGrowth = svc.cat === 'AI도구' ? 1 + mi * 0.035 : 1 + mi * 0.006;
+        const noise = 0.88 + rand() * 0.24;
+        const cost = Math.round(svc.base * w * aiGrowth * noise);
+        const tokens = svc.aiTokens ? Math.round(cost * (800 + rand() * 400)) : 0;
+        DATA.push({ ym: m.ym, svc: svc.id, team: team.id, cost, tokens });
+      });
+    });
+  });
+})();
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+function filterData(opts = {}) {
+  let d = DATA;
+  if (opts.ym)   d = d.filter(r => r.ym === opts.ym);
+  if (opts.yms)  d = d.filter(r => opts.yms.includes(r.ym));
+  if (opts.cat)  d = d.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === opts.cat);
+  if (opts.svc)  d = d.filter(r => r.svc === opts.svc);
+  if (opts.team) d = d.filter(r => r.team === opts.team);
+  return d;
+}
+function sumBy(data, key) { return data.reduce((a, r) => a + r[key], 0); }
+function groupBy(data, keyFn) {
+  const m = {}; data.forEach(r => { const k = keyFn(r); m[k] = (m[k] || 0) + r.cost; }); return m;
+}
+function fmt(n) {
+  if (n >= 100000000) return '₩' + (n / 100000000).toFixed(1) + '억';
+  if (n >= 10000000)  return '₩' + (n / 10000000).toFixed(1) + '천만';
+  if (n >= 1000000)   return '₩' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000)      return '₩' + Math.round(n / 1000) + 'K';
+  return '₩' + n;
+}
+function fmtTokens(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+  return n;
+}
+function delta(cur, prev) { if (!prev) return 0; return ((cur - prev) / prev * 100); }
+function deltaHtml(pct) {
+  const cls = pct > 0 ? 'up' : 'down';
+  const arrow = pct > 0 ? '▲' : '▼';
+  return `<span class="${cls}">${arrow} ${Math.abs(pct).toFixed(2)}%</span>`;
+}
+
+let state = { tab: 'overview', category: 'all', team: 'all', period: 'month' };
+
+function applyFilters() {
+  state.category = document.getElementById('filter-category').value;
+  state.team = document.getElementById('filter-team').value;
+  state.period = document.getElementById('filter-period').value;
+  renderPage();
+}
+
+// ─── SVG CHARTS ──────────────────────────────────────────────────
+function areaChart(seriesList, width, height, opts = {}) {
+  const pl = opts.pl || 62, pr = opts.pr || 20, pt = 12, pb = 30;
+  const W = width - pl - pr, H = height - pt - pb;
+  const allVals = seriesList.flatMap(s => s.data.map(d => d.v));
+  const maxV = Math.max(...allVals) * 1.12;
+  const n = seriesList[0].data.length;
+  function x(i) { return pl + (i / (n - 1)) * W; }
+  function y(v) { return pt + H - (v / maxV) * H; }
+  const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map(f => ({ v: maxV * f, y: pt + H - f * H }));
+  const yLabels = yTicks.map(t =>
+    `<text x="${pl - 8}" y="${t.y + 4}" text-anchor="end" font-size="10" fill="${CHART.yLabel}">${fmt(t.v)}</text>
+     <line x1="${pl}" y1="${t.y}" x2="${pl + W}" y2="${t.y}" stroke="${CHART.grid}" stroke-width="0.8"/>`
+  ).join('');
+  const xLabels = seriesList[0].data.map((d, i) => {
+    if (i % 3 !== 0 && i !== n - 1) return '';
+    return `<text x="${x(i)}" y="${pt + H + 18}" text-anchor="middle" font-size="10" fill="${CHART.yLabel}">${d.label.slice(5)}월</text>`;
+  }).join('');
+  const charts = seriesList.map(s => {
+    const pts = s.data.map((d, i) => `${x(i)},${y(d.v)}`).join(' ');
+    const area = `M${pl},${pt + H} L${pts.split(' ').join(' L')} L${pl + W},${pt + H} Z`;
+    const line = `M${pts.split(' ').join(' L')}`;
+    return `<path d="${area}" fill="${s.color}" fill-opacity="0.12"/>
+            <path d="${line}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${height}" width="100%" style="max-height:${height}px">
+    ${yLabels}${xLabels}${charts}
+    <line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+H}" stroke="${CHART.axis}" stroke-width="1"/>
+    <line x1="${pl}" y1="${pt+H}" x2="${pl+W}" y2="${pt+H}" stroke="${CHART.axis}" stroke-width="1"/>
+  </svg>`;
+}
+
+function barChart(items, width, height, color = '#888') {
+  const maxV = Math.max(...items.map(i => i.v));
+  const barH = Math.min(28, (height - 20) / items.length - 6);
+  const pl = 8, pr = 80, W = width - pl - pr;
+  const bars = items.map((item, i) => {
+    const bw = (item.v / maxV) * W;
+    const by = 10 + i * (barH + 8);
+    return `<rect x="${pl}" y="${by}" width="${bw}" height="${barH}" fill="${item.color || color}" rx="2"/>
+      <text x="${pl + bw + 6}" y="${by + barH * 0.72}" font-size="11" fill="${CHART.barValue}">${fmt(item.v)}</text>
+      <text x="${pl + bw / 2}" y="${by - 4}" text-anchor="middle" font-size="10" fill="${CHART.barName}">${item.label}</text>`;
+  }).join('');
+  const h = 10 + items.length * (barH + 8) + 10;
+  return `<svg viewBox="0 0 ${width} ${h}" width="100%" style="max-height:${h}px">${bars}</svg>`;
+}
+
+function hBarChart(items, width, color = '#888') {
+  const n = Math.min(items.length, 7);
+  const sliced = items.slice(0, n);
+  const maxV = Math.max(...sliced.map(i => i.v));
+  const barW = Math.floor((width - 24) / n) - 6;
+  const chartH = 90;
+  const bars = sliced.map((item, i) => {
+    const bh = Math.max(4, (item.v / maxV) * chartH);
+    const bx = 12 + i * (barW + 6);
+    const by = chartH - bh + 10;
+    const label = item.label.length > 8 ? item.label.slice(0, 8) + '..' : item.label;
+    return `<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" fill="${item.color || color}" rx="2" fill-opacity="0.85"/>
+      <text x="${bx + barW / 2}" y="${by - 4}" text-anchor="middle" font-size="10" fill="${CHART.barValue}" font-weight="600">${fmt(item.v)}</text>
+      <text x="${bx + barW / 2}" y="${chartH + 22}" text-anchor="middle" font-size="9" fill="${CHART.barName}">${label}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${chartH + 32}" width="100%" style="max-height:${chartH + 32}px">${bars}</svg>`;
+}
+
+// ─── PAGE RENDERERS ───────────────────────────────────────────────
+const curYm  = '2025-06';
+const prevYm = '2025-05';
+const curYoy = '2024-06';
+
+function getFilteredBase() {
+  let d = DATA;
+  if (state.category !== 'all') d = d.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === state.category);
+  if (state.team !== 'all')     d = d.filter(r => r.team === state.team);
+  return d;
+}
+
+function renderOverview() {
+  const base = getFilteredBase();
+  const cur  = base.filter(r => r.ym === curYm);
+  const prev = base.filter(r => r.ym === prevYm);
+  const yoy  = base.filter(r => r.ym === curYoy);
+  const totalCur  = sumBy(cur, 'cost');
+  const totalPrev = sumBy(prev, 'cost');
+  const totalYoy  = sumBy(yoy, 'cost');
+  const pct    = delta(totalCur, totalPrev);
+  const yoyPct = delta(totalCur, totalYoy);
+
+  const totalBudget = SERVICES.reduce((a, s) => a + (BUDGETS[s.id] || 0), 0);
+  const budgetPct   = totalBudget ? ((totalCur / totalBudget) * 100).toFixed(1) : null;
+
+  const totalTokens = sumBy(cur, 'tokens');
+  const prevTokens  = sumBy(prev, 'tokens');
+  const tokenPct    = delta(totalTokens, prevTokens);
+
+  const activeServices = [...new Set(cur.filter(r => r.cost > 0).map(r => r.svc))].length;
+
+  // 임원 시그널 계산
+  const overBudgetSvcs = SERVICES.filter(s => {
+    const cv = sumBy(cur.filter(r => r.svc === s.id), 'cost');
+    return BUDGETS[s.id] && cv > BUDGETS[s.id];
+  });
+  const expiringSoon = SERVICES.filter(s => {
+    const exp = EXPIRY[s.id]; if (!exp) return false;
+    const [ey, em] = exp.split('-').map(Number);
+    return (ey - 2025) * 12 + (em - 6) >= 0 && (ey - 2025) * 12 + (em - 6) <= 3;
+  });
+  const aiTrend = MONTHS.slice(-6).map(m =>
+    sumBy(base.filter(r => r.ym === m.ym && SERVICES.find(s => s.id === r.svc)?.cat === 'AI도구'), 'cost')
+  );
+  let consec = 0;
+  for (let i = aiTrend.length - 1; i > 0; i--) {
+    if (aiTrend[i] > aiTrend[i - 1]) consec++;
+    else break;
+  }
+
+  const sb = `var(--c-border-w) solid var(--c-border)`;
+  const signalCards = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:var(--c-surface);border:${sb};padding:16px 20px;">
+        <div style="font-size:10px;color:var(--c-text-dim);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">AI 비용 연속 증가</div>
+        <div style="font-size:28px;font-weight:700;color:${T.accent};line-height:1">${consec}개월째</div>
+        <div style="font-size:11px;color:var(--c-text-muted);margin-top:6px;">최근 6개월 기준 · 계약 조건 재검토 권고</div>
+      </div>
+      <div style="background:var(--c-surface);border:${sb};padding:16px 20px;">
+        <div style="font-size:10px;color:var(--c-text-dim);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">예산 초과 서비스</div>
+        <div style="font-size:28px;font-weight:700;color:${T.accent};line-height:1">${overBudgetSvcs.length}개</div>
+        <div style="font-size:11px;color:var(--c-text-muted);margin-top:6px;">${overBudgetSvcs.slice(0,2).map(s=>s.name).join(', ')}${overBudgetSvcs.length > 2 ? ' 외 '+(overBudgetSvcs.length-2)+'개' : ''}</div>
+      </div>
+      <div style="background:var(--c-surface);border:${sb};padding:16px 20px;">
+        <div style="font-size:10px;color:var(--c-text-dim);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">계약 만료 임박 (3개월)</div>
+        <div style="font-size:28px;font-weight:700;color:${T.accent};line-height:1">${expiringSoon.length}개</div>
+        <div style="font-size:11px;color:var(--c-text-muted);margin-top:6px;">${expiringSoon.slice(0,2).map(s=>s.name+' '+EXPIRY[s.id]).join(' · ')}</div>
+      </div>
+    </div>`;
+
+  const histData = MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym), 'cost') }));
+  const catSums = CATEGORIES.map(cat => {
+    const cv = sumBy(cur.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === cat), 'cost');
+    const pv = sumBy(prev.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === cat), 'cost');
+    return { cat, cv, pv, pct: delta(cv, pv) };
+  }).sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+  const svcSums = SERVICES.map(s => ({
+    label: s.name, v: sumBy(cur.filter(r => r.svc === s.id), 'cost'), color: CAT_COLORS[s.cat]
+  })).sort((a, b) => b.v - a.v);
+  const teamSums = TEAMS.map(t => ({
+    label: t.name, v: sumBy(cur.filter(r => r.team === t.id), 'cost'), color: CHART.barValue
+  })).sort((a, b) => b.v - a.v);
+  const trendCards = catSums.slice(0, 2).map(c => {
+    const top2 = SERVICES.filter(s => s.cat === c.cat)
+      .map(s => ({ name: s.name, cv: sumBy(cur.filter(r => r.svc === s.id), 'cost'), pv: sumBy(prev.filter(r => r.svc === s.id), 'cost') }))
+      .sort((a, b) => Math.abs(delta(b.cv, b.pv)) - Math.abs(delta(a.cv, a.pv))).slice(0, 2);
+    return `<div class="trend-card">
+      <div class="trend-card-header">
+        <span class="trend-card-title" style="color:${CAT_COLORS[c.cat]}">${c.cat}</span>
+        <span style="font-size:11px;color:var(--c-text-muted);">전월 대비 ${c.pct >= 0 ? '+' : ''}${c.pct.toFixed(1)}%</span>
+      </div>
+      <div class="trend-items">
+        ${top2.map((t, ti) => `<div class="trend-item">
+          <div class="trend-item-label">${t.name}</div>
+          <div class="trend-item-sub">${ti === 0 ? '증감 1위' : '증감 2위'}</div>
+          <div class="trend-item-val">${fmt(t.cv)}</div>
+          <div class="trend-item-delta ${delta(t.cv, t.pv) > 0 ? 'up' : 'down'}">
+            ${delta(t.cv, t.pv) > 0 ? '▲' : '▼'} ${Math.abs(delta(t.cv, t.pv)).toFixed(2)}%
+          </div></div>`).join('')}
+      </div></div>`;
+  }).join('');
+  const catHistData = CATEGORIES.map(cat => ({
+    color: CAT_COLORS[cat], label: cat,
+    data: MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym && SERVICES.find(s => s.id === r.svc)?.cat === cat), 'cost') }))
+  }));
+  const legendHtml = CATEGORIES.map(cat =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[cat]}"></span>${cat}</span>`
+  ).join('');
+  return `
+  <div class="page-header">
+    <div class="page-header-top">
+      <div><div class="page-title">Overview</div><div class="page-subtitle">2025년 6월 경영 요약 — 즉시 검토 필요 ${overBudgetSvcs.length + expiringSoon.length}건</div></div>
+      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+    </div>
+  </div>
+  <div class="page-body">
+    ${signalCards}
+    <div class="kpi-row">
+      <div class="kpi-main">
+        <div class="kpi-label">월 구독 총비용</div>
+        <div class="kpi-value">${fmt(totalCur)}</div>
+        <div class="kpi-delta ${pct > 0 ? 'up' : 'down'}">${deltaHtml(pct)} MoM &nbsp;|&nbsp; <span style="color:${yoyPct>0?T.accent:T.positive}">${yoyPct>0?'▲':'▼'} ${Math.abs(yoyPct).toFixed(1)}%</span> YoY</div>
+        <div class="kpi-sub">월 예산 대비 ${budgetPct}% 집행</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">AI 토큰 소비 (Input+Output 추정)</div>
+        <div class="kpi-value">${fmtTokens(totalTokens)}</div>
+        <div class="kpi-delta ${tokenPct > 0 ? 'up' : 'down'}">${deltaHtml(tokenPct)}</div>
+        <div class="kpi-sub">Copilot · Bedrock · Vertex AI 합산</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">예산 초과 서비스</div>
+        <div class="kpi-value">${overBudgetSvcs.length}개</div>
+        <div class="kpi-sub">전체 ${activeServices}개 서비스 중</div>
+      </div>
+    </div>
+    <div class="chart-card primary" style="margin-bottom:20px;">
+      <div class="chart-title">비용 상승세가 구조적인가, 일시적인가?</div>
+      <div class="chart-subtitle">월간 구독비용 절대값 추이 2024.01 — 2025.06 · 단위: 원(₩)</div>
+      ${areaChart([{ color: T.accent, data: histData }], 900, 160)}
+    </div>
+    <div class="section-divider"><div class="section-divider-text">2025년 6월 주요 변동 — 전월 대비 증감률 기준</div></div>
+    <div class="trend-grid">${trendCards}</div>
+    <div class="chart-grid col-2" style="margin-bottom:20px;">
+      <div class="chart-card"><div class="chart-title">상위 3개 서비스가 전체 예산의 절반 이상인가?</div><div class="chart-subtitle">이번 달 서비스별 구독비용</div>${hBarChart(svcSums.slice(0,7), 380)}</div>
+      <div class="chart-card"><div class="chart-title">팀 간 1인당 비용 격차가 합리적인가?</div><div class="chart-subtitle">이번 달 팀별 총 구독비용</div>${hBarChart(teamSums, 380)}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">AI 도구가 클라우드 비중을 역전하는 시점은?</div>
+      <div class="chart-subtitle">카테고리별 월간 구독비용 2024.01 — 2025.06 · 단위: 원(₩)</div>
+      ${areaChart(catHistData, 900, 180)}
+      <div class="legend">${legendHtml}</div>
+    </div>
+  </div>`;
+}
+
+function renderServices() {
+  const base = getFilteredBase();
+  const cur  = base.filter(r => r.ym === curYm);
+  const prev = base.filter(r => r.ym === prevYm);
+  const yoy  = base.filter(r => r.ym === curYoy);
+  const totalCur  = sumBy(cur, 'cost');
+  const totalPrev = sumBy(prev, 'cost');
+  const pct = delta(totalCur, totalPrev);
+  const overBudgetSvcs = SERVICES.filter(s => {
+    const cv = sumBy(cur.filter(r => r.svc === s.id), 'cost');
+    return BUDGETS[s.id] && cv > BUDGETS[s.id];
+  });
+  const catData = CATEGORIES.map(cat => ({
+    label: cat, v: sumBy(cur.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === cat), 'cost'), color: CAT_COLORS[cat]
+  })).sort((a, b) => b.v - a.v);
+  const svcData = SERVICES.map(s => ({
+    label: s.name, v: sumBy(cur.filter(r => r.svc === s.id), 'cost'),
+    pv: sumBy(prev.filter(r => r.svc === s.id), 'cost'),
+    yv: sumBy(yoy.filter(r => r.svc === s.id), 'cost'),
+    cat: s.cat, id: s.id
+  })).sort((a, b) => b.v - a.v);
+  const catHistData = CATEGORIES.map(cat => ({
+    color: CAT_COLORS[cat], label: cat,
+    data: MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym && SERVICES.find(s => s.id === r.svc)?.cat === cat), 'cost') }))
+  }));
+  const tableRows = svcData.map(s => {
+    const d = delta(s.v, s.pv);
+    const yoyD = delta(s.v, s.yv);
+    const budget = BUDGETS[s.id];
+    const budgetPct = budget ? ((s.v / budget) * 100).toFixed(0) : null;
+    const overBudget = budget && s.v > budget;
+    const expiry = EXPIRY[s.id];
+    const expWarn = expiry && (() => {
+      const [ey, em] = expiry.split('-').map(Number);
+      const diff = (ey - 2025) * 12 + (em - 6);
+      return diff >= 0 && diff <= 3;
+    })();
+    return `<tr style="${overBudget ? 'background:rgba(232,0,13,0.025)' : ''}">
+      <td><strong>${s.label}</strong>${expWarn ? `&nbsp;<span style="font-size:10px;background:${T.accent};color:#fff;padding:1px 5px;font-weight:700;">만료임박</span>` : ''}</td>
+      <td><span class="badge ${CAT_BADGE[s.cat]}">${s.cat}</span></td>
+      <td style="text-align:right;font-weight:600">${fmt(s.v)}</td>
+      <td style="text-align:right">${fmt(s.pv)}</td>
+      <td style="text-align:right;color:${d > 0 ? T.accent : T.positive}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
+      <td style="text-align:right;color:${yoyD > 0 ? T.accent : T.positive}">${yoyD > 0 ? '▲' : '▼'} ${Math.abs(yoyD).toFixed(1)}%</td>
+      <td style="text-align:right;color:${overBudget ? T.accent : T.positive};font-weight:${overBudget?'700':'400'}">${budgetPct ? budgetPct+'%' : '—'}</td>
+      <td style="text-align:right;font-size:11px;color:${expWarn ? T.accent : 'var(--c-text-muted)'};font-weight:${expWarn?'600':'400'}">${expiry || '—'}</td>
+    </tr>`;
+  }).join('');
+  const legendHtml = CATEGORIES.map(cat =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[cat]}"></span>${cat}</span>`
+  ).join('');
+  return `
+  <div class="page-header">
+    <div class="page-header-top">
+      <div><div class="page-title">서비스별 현황</div><div class="page-subtitle">2025년 6월 · 예산 대비 · YoY · 계약 만료 포함</div></div>
+      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="kpi-row">
+      <div class="kpi-main">
+        <div class="kpi-label">서비스 총비용</div>
+        <div class="kpi-value">${fmt(totalCur)}</div>
+        <div class="kpi-delta ${pct > 0 ? 'up' : 'down'}">${deltaHtml(pct)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">예산 초과 서비스</div>
+        <div class="kpi-value">${overBudgetSvcs.length}개</div>
+        <div class="kpi-sub">${overBudgetSvcs.slice(0,2).map(s=>s.name).join(', ')}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">가장 빠른 증가 (MoM)</div>
+        <div class="kpi-value" style="font-size:18px;">${[...svcData].sort((a,b)=>delta(b.v,b.pv)-delta(a.v,a.pv))[0]?.label}</div>
+        <div class="kpi-sub" style="color:${T.accent}">▲ ${Math.abs(delta([...svcData].sort((a,b)=>delta(b.v,b.pv)-delta(a.v,a.pv))[0]?.v,[...svcData].sort((a,b)=>delta(b.v,b.pv)-delta(a.v,a.pv))[0]?.pv)).toFixed(1)}%</div>
+      </div>
+    </div>
+    <div class="chart-grid col-2" style="margin-bottom:20px;">
+      <div class="chart-card"><div class="chart-title">어느 카테고리가 예산을 가장 많이 소비하는가?</div><div class="chart-subtitle">카테고리별 이번 달 비용</div>${hBarChart(catData, 380)}</div>
+      <div class="chart-card"><div class="chart-title">비용 상위 서비스가 전체의 몇 %를 차지하는가?</div><div class="chart-subtitle">서비스별 이번 달 비용 TOP 7</div>${hBarChart(svcData.slice(0,7).map(s=>({label:s.label,v:s.v,color:CAT_COLORS[s.cat]})), 380)}</div>
+    </div>
+    <div class="chart-card" style="margin-bottom:20px;">
+      <div class="chart-title">AI 도구 성장률이 타 카테고리를 지속적으로 앞서는가?</div>
+      <div class="chart-subtitle">카테고리별 월간 구독비용 2024.01 — 2025.06</div>
+      ${areaChart(catHistData, 900, 180)}
+      <div class="legend">${legendHtml}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">예산 초과 · 계약 만료 임박 서비스는 어디인가?</div>
+      <div class="chart-subtitle">붉은 배경 = 예산 초과 · 만료임박 = 3개월 이내 계약 만료</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>서비스</th><th>카테고리</th>
+          <th style="text-align:right">이번 달</th>
+          <th style="text-align:right">지난 달</th>
+          <th style="text-align:right">MoM</th>
+          <th style="text-align:right">YoY</th>
+          <th style="text-align:right">예산 대비</th>
+          <th style="text-align:right">계약 만료</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderTeams() {
+  const base = getFilteredBase();
+  const cur  = base.filter(r => r.ym === curYm);
+  const prev = base.filter(r => r.ym === prevYm);
+  const yoy  = base.filter(r => r.ym === curYoy);
+  const teamColors = THEMES[currentTheme].teamColors;
+  const totalHeadcount = TEAMS.reduce((a, t) => a + t.headcount, 0);
+  const totalCur = sumBy(cur, 'cost');
+  const teamData = TEAMS.map(t => ({
+    label: t.name, id: t.id,
+    v:  sumBy(cur.filter(r => r.team === t.id), 'cost'),
+    pv: sumBy(prev.filter(r => r.team === t.id), 'cost'),
+    yv: sumBy(yoy.filter(r => r.team === t.id), 'cost'),
+    headcount: t.headcount
+  })).sort((a, b) => b.v - a.v);
+  const perHeadAvg = Math.round(totalCur / totalHeadcount);
+  const sorted4ph = [...teamData].sort((a,b) => (b.v/b.headcount) - (a.v/a.headcount));
+  const highestPH = sorted4ph[0];
+  const lowestPH  = sorted4ph[sorted4ph.length - 1];
+  const perHeadGap = ((highestPH.v / highestPH.headcount) / (lowestPH.v / lowestPH.headcount)).toFixed(1);
+  const teamHistData = TEAMS.map((t, ti) => ({
+    color: teamColors[ti], label: t.name,
+    data: MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym && r.team === t.id), 'cost') }))
+  }));
+  const topTeam = teamData[0];
+  const topTeamSvcs = SERVICES.map(s => ({
+    label: s.name, v: sumBy(cur.filter(r => r.team === topTeam.id && r.svc === s.id), 'cost'), color: CAT_COLORS[s.cat]
+  })).sort((a, b) => b.v - a.v).slice(0, 6);
+  const tableRows = teamData.map(t => {
+    const d    = delta(t.v, t.pv);
+    const yoyD = delta(t.v, t.yv);
+    const perHead = Math.round(t.v / t.headcount);
+    const aboveAvg = perHead > perHeadAvg;
+    return `<tr>
+      <td><strong>${t.label}</strong></td>
+      <td style="text-align:right">${t.headcount}명</td>
+      <td style="text-align:right;font-weight:600">${fmt(t.v)}</td>
+      <td style="text-align:right">${fmt(t.pv)}</td>
+      <td style="text-align:right;color:${d > 0 ? T.accent : T.positive}">${d > 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%</td>
+      <td style="text-align:right;color:${yoyD > 0 ? T.accent : T.positive}">${yoyD > 0 ? '▲' : '▼'} ${Math.abs(yoyD).toFixed(1)}%</td>
+      <td style="text-align:right;color:${aboveAvg ? T.accent : T.positive};font-weight:${aboveAvg?'600':'400'}">${fmt(perHead)}/인</td>
+    </tr>`;
+  }).join('');
+  const legendHtml = TEAMS.map((t, ti) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${teamColors[ti]}"></span>${t.name}</span>`
+  ).join('');
+  return `
+  <div class="page-header">
+    <div class="page-header-top">
+      <div><div class="page-title">팀별 현황</div><div class="page-subtitle">2025년 6월 · 1인당 비용 · YoY 포함</div></div>
+      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="kpi-row">
+      <div class="kpi-main">
+        <div class="kpi-label">팀별 구독비용 합계</div>
+        <div class="kpi-value">${fmt(totalCur)}</div>
+        <div class="kpi-delta ${delta(totalCur,sumBy(prev,'cost')) > 0 ? 'up' : 'down'}">${deltaHtml(delta(totalCur,sumBy(prev,'cost')))} MoM</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">1인당 평균 비용 (전사)</div>
+        <div class="kpi-value">${fmt(perHeadAvg)}</div>
+        <div class="kpi-sub">${totalHeadcount}명 기준</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">팀 간 1인당 비용 격차</div>
+        <div class="kpi-value">${perHeadGap}배</div>
+        <div class="kpi-sub">${highestPH.label} vs ${lowestPH.label}</div>
+      </div>
+    </div>
+    <div class="chart-grid col-2" style="margin-bottom:20px;">
+      <div class="chart-card"><div class="chart-title">팀 규모 대비 비용이 가장 높은 팀은?</div><div class="chart-subtitle">이번 달 팀별 총 구독비용</div>${hBarChart(teamData.map(t=>({label:t.label,v:t.v})), 380)}</div>
+      <div class="chart-card"><div class="chart-title">${topTeam.label}은 왜 비용이 가장 높은가?</div><div class="chart-subtitle">해당 팀의 서비스 구성</div>${hBarChart(topTeamSvcs, 380)}</div>
+    </div>
+    <div class="chart-card" style="margin-bottom:20px;">
+      <div class="chart-title">팀 규모 대비 비용 증가율이 정당한가?</div>
+      <div class="chart-subtitle">팀별 월간 구독비용 추이 2024.01 — 2025.06</div>
+      ${areaChart(teamHistData, 900, 180)}
+      <div class="legend">${legendHtml}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">인당 비용이 전사 평균을 초과하는 팀은 어디이고, 그 차이는 정당한가?</div>
+      <div class="chart-subtitle">빨강 = 전사 평균(${fmt(perHeadAvg)}/인) 초과</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>팀</th><th style="text-align:right">인원</th>
+          <th style="text-align:right">이번 달</th><th style="text-align:right">지난 달</th>
+          <th style="text-align:right">MoM</th><th style="text-align:right">YoY</th>
+          <th style="text-align:right">1인당</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderCost() {
+  const base = getFilteredBase();
+  const cur  = base.filter(r => r.ym === curYm);
+  const prev = base.filter(r => r.ym === prevYm);
+  const yoy  = base.filter(r => r.ym === curYoy);
+  const totalCur  = sumBy(cur, 'cost');
+  const totalPrev = sumBy(prev, 'cost');
+  const totalYoy  = sumBy(yoy, 'cost');
+  const momPct = delta(totalCur, totalPrev);
+  const yoyPct = delta(totalCur, totalYoy);
+  const trendData = MONTHS.map(m => ({ label: m.ym, v: sumBy(base.filter(r => r.ym === m.ym), 'cost') }));
+  const aiCur   = sumBy(cur.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === 'AI도구'), 'cost');
+  const cloudCur = sumBy(cur.filter(r => SERVICES.find(s => s.id === r.svc)?.cat === '클라우드'), 'cost');
+  const aiFirst = sumBy(base.filter(r => r.ym === '2024-01' && SERVICES.find(s => s.id === r.svc)?.cat === 'AI도구'), 'cost');
+  const aiGrowth18m = delta(aiCur, aiFirst);
+  const now = new Date('2025-06-01');
+  const optItems = SERVICES.map(s => {
+    const v  = sumBy(cur.filter(r => r.svc === s.id), 'cost');
+    const pv = sumBy(prev.filter(r => r.svc === s.id), 'cost');
+    const bv = BUDGETS[s.id] || 0;
+    const expiryStr = EXPIRY[s.id] || '';
+    let expiryMonths = null;
+    if (expiryStr) {
+      const [ey, em] = expiryStr.split('-').map(Number);
+      expiryMonths = (ey - now.getFullYear()) * 12 + (em - (now.getMonth() + 1));
+    }
+    const d = delta(v, pv);
+    const budgetPct = bv ? ((v / bv) * 100).toFixed(0) : null;
+    let action;
+    if (d > 25)       action = '즉시 계약 재협상';
+    else if (d > 15)  action = '담당팀 보고 요청';
+    else if (d > 5)   action = '다음 분기 검토';
+    else              action = null;
+    return { name: s.name, cat: s.cat, v, d, budgetPct, expiryMonths, expiryStr, action };
+  }).filter(s => s.action !== null).sort((a, b) => b.d - a.d);
+  const optRows = optItems.slice(0, 8).map(s => {
+    const expBadge = s.expiryMonths !== null && s.expiryMonths <= 3
+      ? `<span style="margin-left:4px;background:#ef7d86;color:#fff;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700">만료임박</span>` : '';
+    const budgetCell = s.budgetPct ? `<span style="color:${parseInt(s.budgetPct)>100?T.accent:'inherit'}">${s.budgetPct}%</span>` : '—';
+    const actionColor = s.d > 25 ? T.accent : s.d > 15 ? '#efb05d' : 'var(--c-text-dim)';
+    return `<tr${s.d > 25 ? ' style="background:rgba(232,0,13,0.025)"' : ''}>
+      <td><strong>${s.name}</strong>${expBadge}</td>
+      <td><span class="badge ${CAT_BADGE[s.cat]}">${s.cat}</span></td>
+      <td style="text-align:right;font-weight:600">${fmt(s.v)}</td>
+      <td style="text-align:right;color:${T.accent}">▲ ${s.d.toFixed(1)}%</td>
+      <td style="text-align:right">${budgetCell}</td>
+      <td style="text-align:right">${s.expiryStr || '—'}</td>
+      <td style="color:${actionColor};font-size:11px;font-weight:${s.d>25?'700':'400'}">${s.action}</td>
+    </tr>`;
+  }).join('');
+  return `
+  <div class="page-header">
+    <div class="page-header-top">
+      <div><div class="page-title">비용분석</div><div class="page-subtitle">구독비용 트렌드 · AI vs 클라우드 · 계약 재검토 대상</div></div>
+      <div class="page-refresh">마지막 업데이트: 2025년 6월 10일</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="kpi-row">
+      <div class="kpi-main">
+        <div class="kpi-label">이번 달 총비용</div>
+        <div class="kpi-value">${fmt(totalCur)}</div>
+        <div class="kpi-delta ${momPct > 0 ? 'up' : 'down'}">${deltaHtml(momPct)} MoM &nbsp;|&nbsp; <span style="color:${yoyPct>0?T.accent:T.positive}">${yoyPct>0?'▲':'▼'} ${Math.abs(yoyPct).toFixed(1)}%</span> YoY</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">AI 도구 vs 클라우드 비중</div>
+        <div class="kpi-value" style="font-size:16px;">${(aiCur/totalCur*100).toFixed(0)}% vs ${(cloudCur/totalCur*100).toFixed(0)}%</div>
+        <div class="kpi-sub">AI 18개월 성장 ${aiGrowth18m.toFixed(0)}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">즉시 재검토 필요</div>
+        <div class="kpi-value">${optItems.filter(s => s.d > 25).length}개</div>
+        <div class="kpi-sub">MoM 25%↑ 서비스</div>
+      </div>
+    </div>
+    <div class="chart-card primary" style="margin-bottom:20px;">
+      <div class="chart-title">비용이 계절적 패턴을 따르는가, 구조적으로 증가 중인가?</div>
+      <div class="chart-subtitle">월간 총 구독비용 추이 2024.01 — 2025.06</div>
+      ${areaChart([{ color: T.accent, data: trendData }], 900, 160)}
+    </div>
+    <div class="chart-grid col-2" style="margin-bottom:20px;">
+      <div class="chart-card">
+        <div class="chart-title">클라우드 vs AI 투자 비중이 전략 방향에 부합하는가?</div>
+        <div class="chart-subtitle">카테고리별 이번 달 비용 구성</div>
+        ${hBarChart(CATEGORIES.map(cat=>({
+          label:cat,
+          v:sumBy(cur.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat===cat),'cost'),
+          color:CAT_COLORS[cat]
+        })).sort((a,b)=>b.v-a.v), 380)}
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">AI 도입 1.5년, 투자 대비 성과 측정 기준점에 도달했는가?</div>
+        <div class="chart-subtitle">AI 도구 카테고리 월간 비용 2024.01 — 2025.06</div>
+        ${areaChart([{
+          color: T.accent,
+          data: MONTHS.map(m=>({label:m.ym, v:sumBy(base.filter(r=>r.ym===m.ym&&SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'),'cost')}))
+        }], 380, 160)}
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">지금 당장 계약 재검토가 필요한 서비스는 무엇인가?</div>
+      <div class="chart-subtitle">MoM 5%↑ 서비스 · 빨강=즉시 재협상(25%↑) · 노랑=팀 보고(15%↑) · 회색=다음 분기</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>서비스</th><th>카테고리</th>
+          <th style="text-align:right">이번 달 비용</th>
+          <th style="text-align:right">MoM</th>
+          <th style="text-align:right">예산 대비</th>
+          <th style="text-align:right">계약 만료</th>
+          <th>권고사항</th>
+        </tr></thead>
+        <tbody>${optRows || `<tr><td colspan="7" style="text-align:center;color:var(--c-text-muted);padding:20px">최적화 대상 없음</td></tr>`}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+function navigate(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.sb-nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === tab)
+  );
+  renderPage();
+}
+
+function renderPage() {
+  const el = document.getElementById('page-content');
+  switch (state.tab) {
+    case 'overview': el.innerHTML = renderOverview(); break;
+    case 'services': el.innerHTML = renderServices(); break;
+    case 'teams':    el.innerHTML = renderTeams();    break;
+    case 'cost':     el.innerHTML = renderCost();     break;
+  }
+}
+
+// Init
+buildThemeSwitcher();
+document.body.dataset.concept = THEMES[currentTheme].concept || 'flat';
+renderPage();
+</script>
+</body>
+</html>
