@@ -124,6 +124,7 @@ body {
 }
 .chart-title { font-size: 13px; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
 .chart-subtitle { font-size: 11px; color: var(--c-text-muted); margin-bottom: 12px; }
+.chart-insight { font-size:11px; color:var(--c-text-sub); background:var(--c-hover); border-left:2px solid var(--c-accent); padding:5px 9px; margin:2px 0 10px; border-radius:0 3px 3px 0; line-height:1.5; }
 .chart-grid { display: grid; gap: 16px; margin-bottom: 20px; }
 .chart-grid.col-2 { grid-template-columns: 1fr 1fr; }
 .chart-grid.col-3 { grid-template-columns: 1fr 1fr 1fr; }
@@ -938,6 +939,8 @@ function getFilteredBase() {
   return d;
 }
 
+function ci(t) { return '<div class="chart-insight">' + t + '</div>'; }
+
 function renderOverview() {
   const base = getFilteredBase();
   const cur  = base.filter(r => r.ym === curYm);
@@ -1035,6 +1038,13 @@ function renderOverview() {
   const legendHtml = CATEGORIES.map(cat =>
     `<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[cat]}"></span>${cat}</span>`
   ).join('');
+  const ovConsec = (() => { let c = 0; const hv = MONTHS.map(m => sumBy(base.filter(r => r.ym === m.ym), 'cost')); for (let i = hv.length - 1; i > 0; i--) { if (hv[i] > hv[i-1]) c++; else break; } return c; })();
+  const ovTop3Pct = svcSums.length >= 3 ? (svcSums.slice(0,3).reduce((a,s)=>a+s.v,0) / totalCur * 100).toFixed(0) : '—';
+  const ovTeamRatio = teamSums.length >= 2 ? (teamSums[0].v / teamSums[teamSums.length-1].v).toFixed(1) : '—';
+  const ovAiCur = sumBy(cur.filter(r => SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'), 'cost');
+  const ovCloudCur = sumBy(cur.filter(r => SERVICES.find(s=>s.id===r.svc)?.cat==='클라우드'), 'cost');
+  const ovAiPrev = sumBy(prev.filter(r => SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'), 'cost');
+  const ovAiMoM = ovAiPrev > 0 ? delta(ovAiCur, ovAiPrev) : 0;
   return `
   <div class="page-header">
     <div class="page-header-top">
@@ -1066,17 +1076,19 @@ function renderOverview() {
     <div class="chart-card primary" style="margin-bottom:20px;">
       <div class="chart-title">비용 상승세가 구조적인가, 일시적인가?</div>
       <div class="chart-subtitle">월간 구독비용 절대값 추이 2024.01 — 2025.06 · 단위: 원(₩)</div>
+      ${ci(ovConsec >= 3 ? ovConsec + '개월 연속 상승 지속 → 구조적 증가 패턴으로 판단됨' : pct > 0 ? '이번 달 MoM +' + pct.toFixed(1) + '% 상승, 연속성 미확인 — 일시적 변동 가능성 존재' : '이번 달 MoM ' + pct.toFixed(1) + '% 하락, 상승세 일시 중단')}
       ${areaChart([{ color: T.accent, data: histData }], 900, 160)}
     </div>
     <div class="section-divider"><div class="section-divider-text">2025년 6월 주요 변동 — 전월 대비 증감률 기준</div></div>
     <div class="trend-grid">${trendCards}</div>
     <div class="chart-grid col-2" style="margin-bottom:20px;">
-      <div class="chart-card"><div class="chart-title">상위 3개 서비스가 전체 예산의 절반 이상인가?</div><div class="chart-subtitle">이번 달 서비스별 구독비용</div>${hBarChart(svcSums.slice(0,7), 380)}</div>
-      <div class="chart-card"><div class="chart-title">팀 간 1인당 비용 격차가 합리적인가?</div><div class="chart-subtitle">이번 달 팀별 총 구독비용</div>${hBarChart(teamSums, 380)}</div>
+      <div class="chart-card"><div class="chart-title">상위 3개 서비스가 전체 예산의 절반 이상인가?</div><div class="chart-subtitle">이번 달 서비스별 구독비용</div>${ci('상위 3개(' + svcSums.slice(0,3).map(s=>s.label).join('·') + ')가 전체의 ' + ovTop3Pct + '% → ' + (parseInt(ovTop3Pct)>=50 ? '집중도 높음, 협상 레버리지 확보 가능' : '비교적 분산된 구조'))}${hBarChart(svcSums.slice(0,7), 380)}</div>
+      <div class="chart-card"><div class="chart-title">팀 간 1인당 비용 격차가 합리적인가?</div><div class="chart-subtitle">이번 달 팀별 총 구독비용</div>${ci('최고 지출 ' + teamSums[0]?.label + ' vs 최저 ' + teamSums[teamSums.length-1]?.label + ' — 지출 격차 ' + ovTeamRatio + '배 · 1인당 비용 검토 필요')}${hBarChart(teamSums, 380)}</div>
     </div>
     <div class="chart-card">
       <div class="chart-title">AI 도구가 클라우드 비중을 역전하는 시점은?</div>
       <div class="chart-subtitle">카테고리별 월간 구독비용 2024.01 — 2025.06 · 단위: 원(₩)</div>
+      ${ci('현재 AI ' + (ovAiCur/totalCur*100).toFixed(0) + '% vs 클라우드 ' + (ovCloudCur/totalCur*100).toFixed(0) + '% · AI MoM ' + (ovAiMoM>=0?'+':'') + ovAiMoM.toFixed(1) + '% 고성장 지속 — 역전 시점 추적 필요')}
       ${areaChart(catHistData, 900, 180)}
       <div class="legend">${legendHtml}</div>
     </div>
@@ -1134,6 +1146,14 @@ function renderServices() {
   const legendHtml = CATEGORIES.map(cat =>
     `<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[cat]}"></span>${cat}</span>`
   ).join('');
+  const svcTop3Pct = (svcData.slice(0,3).reduce((a,s)=>a+s.v,0) / totalCur * 100).toFixed(0);
+  const svcAiCur = sumBy(cur.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'),'cost');
+  const svcAiPrev = sumBy(prev.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'),'cost');
+  const svcCloudCur = sumBy(cur.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat==='클라우드'),'cost');
+  const svcCloudPrev = sumBy(prev.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat==='클라우드'),'cost');
+  const svcAiMoM = svcAiPrev > 0 ? delta(svcAiCur, svcAiPrev) : 0;
+  const svcCloudMoM = svcCloudPrev > 0 ? delta(svcCloudCur, svcCloudPrev) : 0;
+  const svcExpiring = SERVICES.filter(s => { const exp = EXPIRY[s.id]; if(!exp) return false; const [ey,em] = exp.split('-').map(Number); return (ey-2025)*12+(em-6)>=0&&(ey-2025)*12+(em-6)<=3; }).length;
   return `
   <div class="page-header">
     <div class="page-header-top">
@@ -1160,18 +1180,20 @@ function renderServices() {
       </div>
     </div>
     <div class="chart-grid col-2" style="margin-bottom:20px;">
-      <div class="chart-card"><div class="chart-title">어느 카테고리가 예산을 가장 많이 소비하는가?</div><div class="chart-subtitle">카테고리별 이번 달 비용</div>${hBarChart(catData, 380)}</div>
-      <div class="chart-card"><div class="chart-title">비용 상위 서비스가 전체의 몇 %를 차지하는가?</div><div class="chart-subtitle">서비스별 이번 달 비용 TOP 7</div>${hBarChart(svcData.slice(0,7).map(s=>({label:s.label,v:s.v,color:CAT_COLORS[s.cat]})), 380)}</div>
+      <div class="chart-card"><div class="chart-title">어느 카테고리가 예산을 가장 많이 소비하는가?</div><div class="chart-subtitle">카테고리별 이번 달 비용</div>${ci(catData[0]?.label + '이 전체의 ' + (catData[0]?.v/totalCur*100).toFixed(0) + '% 소비 · 2위 ' + catData[1]?.label + ' 대비 ' + (catData[1]?.v>0?(catData[0]?.v/catData[1]?.v).toFixed(1):'—') + '배 격차')}${hBarChart(catData, 380)}</div>
+      <div class="chart-card"><div class="chart-title">비용 상위 서비스가 전체의 몇 %를 차지하는가?</div><div class="chart-subtitle">서비스별 이번 달 비용 TOP 7</div>${ci('상위 3개 서비스가 전체의 ' + svcTop3Pct + '% 차지 · 1위 ' + svcData[0]?.label + ' 단독 ' + (svcData[0]?.v/totalCur*100).toFixed(0) + '% 점유')}${hBarChart(svcData.slice(0,7).map(s=>({label:s.label,v:s.v,color:CAT_COLORS[s.cat]})), 380)}</div>
     </div>
     <div class="chart-card" style="margin-bottom:20px;">
       <div class="chart-title">AI 도구 성장률이 타 카테고리를 지속적으로 앞서는가?</div>
       <div class="chart-subtitle">카테고리별 월간 구독비용 2024.01 — 2025.06</div>
+      ${ci('AI 도구 MoM ' + (svcAiMoM>=0?'+':'') + svcAiMoM.toFixed(1) + '% vs 클라우드 ' + (svcCloudMoM>=0?'+':'') + svcCloudMoM.toFixed(1) + '% → AI 성장세가 ' + (svcAiMoM>svcCloudMoM ? (svcAiMoM-svcCloudMoM).toFixed(1)+'%p 앞서는 중' : '이번 달은 클라우드와 유사하거나 둔화'))}
       ${areaChart(catHistData, 900, 180)}
       <div class="legend">${legendHtml}</div>
     </div>
     <div class="chart-card">
       <div class="chart-title">예산 초과 · 계약 만료 임박 서비스는 어디인가?</div>
       <div class="chart-subtitle">붉은 배경 = 예산 초과 · 만료임박 = 3개월 이내 계약 만료</div>
+      ${ci('예산 초과 ' + overBudgetSvcs.length + '개 · 3개월 내 계약 만료 ' + svcExpiring + '개 — 즉시 계약 재검토 및 예산 조정 필요')}
       <table class="data-table">
         <thead><tr>
           <th>서비스</th><th>카테고리</th>
@@ -1494,6 +1516,7 @@ function renderSimulation() {
     <div class="chart-card" style="margin-bottom:20px">
       <div class="chart-title">비용 예측 — Holt 이중지수평활법 (α=0.35, β=0.1)</div>
       <div class="chart-subtitle">18개월 실적 + 향후 6개월 예측 · 빨간 점 = 이상값(|z|>2σ) · 점선 노랑 = 선형회귀 추세</div>
+      ${ci('6개월 후 예상 ' + fmt(Math.round(holtIn6)) + ' (현재 대비 ' + (parseFloat(growthIn6)>=0?'+':'') + growthIn6 + '%) · 비용 가속도 ' + (parseFloat(accel)>=0?'+':'') + accel + '% · 이상값 ' + anomCount + '건 감지')}
       ${forecastChartSVG(monthlyData, holt.fwd, lr, anom, 900, 200)}
       <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-top:8px;color:var(--c-text-dim)">
         <span style="color:${T.accent}">— 실적</span><span>-- Holt 예측</span>
@@ -1566,6 +1589,14 @@ function selectTeamDrill(teamId) {
     '</tr>'
   ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--c-text-muted);padding:16px">데이터 없음</td></tr>';
 
+  const insightEl = document.getElementById('drill-insight');
+  if (insightEl) {
+    const teamTotal = rows.reduce((a,r)=>a+r.v,0);
+    const top2 = rows.slice(0,2);
+    insightEl.textContent = top2.length > 0
+      ? top2.map(r => r.name + ' ' + (teamTotal>0?(r.v/teamTotal*100).toFixed(0):'0') + '%').join(' · ') + ' — 이 팀 비용의 주요 원인'
+      : '이 팀의 이번 달 구독 데이터 없음';
+  }
   // Option C: team mini-simulator
   const miniSimEl = document.getElementById('team-mini-sim');
   if (miniSimEl) {
@@ -1635,6 +1666,9 @@ function renderTeams() {
   const legendHtml = TEAMS.map((t, ti) =>
     `<span class="legend-item"><span class="legend-dot" style="background:${teamColors[ti]}"></span>${t.name}</span>`
   ).join('');
+  const topTeamShare = (teamChartData[0]?.v / totalCur * 100).toFixed(0);
+  const aboveAvgTeamsCnt = phChartData.filter(t => t.v > perHeadAvg).length;
+  const teamYoYSort = [...teamData].sort((a,b) => delta(b.v,b.yv) - delta(a.v,a.yv));
   return `
   <div class="page-header">
     <div class="page-header-top">
@@ -1665,22 +1699,26 @@ function renderTeams() {
         <div>
           <div class="chart-title">어느 팀이 예산을 가장 많이 쓰는가?</div>
           <div class="chart-subtitle">막대 클릭 → 오른쪽에서 서비스 구성 드릴다운</div>
+          ${ci(teamChartData[0]?.label + '이 전체의 ' + topTeamShare + '% 집중 · 2위 ' + teamChartData[1]?.label + ' 대비 ' + (teamChartData[1]?.v>0?(teamChartData[0]?.v/teamChartData[1]?.v).toFixed(1):'—') + '배 — 클릭해서 원인 확인')}
           ${teamClickBarChart(teamChartData)}
         </div>
         <div style="padding-top:10px;border-top:1px solid var(--c-border)">
           <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:2px">어느 팀의 비용이 가장 빠르게 증가하는가?</div>
           <div class="chart-subtitle" style="margin-bottom:3px">전월 대비 MoM · 빨강=증가 · 초록=감소 · 클릭 드릴다운</div>
+          ${ci(teamMoMData[0]?.label + '이 MoM +' + Math.abs(teamMoMData[0]?.d||0).toFixed(1) + '% 최고 증가 · ' + teamMoMData[teamMoMData.length-1]?.label + ' ' + (teamMoMData[teamMoMData.length-1]?.d||0).toFixed(1) + '% 대조')}
           ${teamMoMChart(teamMoMData)}
         </div>
         <div style="padding-top:10px;border-top:1px solid var(--c-border)">
           <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:2px">1인당 비용이 전사 평균을 초과하는 팀은?</div>
           <div class="chart-subtitle" style="margin-bottom:3px">전사 평균 ${fmt(perHeadAvg)}/인 기준 점선 · 클릭 드릴다운</div>
+          ${ci(aboveAvgTeamsCnt + '개 팀이 전사 평균 초과 · 최고 ' + phChartData[0]?.label + ' ' + fmt(phChartData[0]?.v||0) + '/인 — ' + (highestPH.v/highestPH.headcount/(lowestPH.v/lowestPH.headcount)).toFixed(1) + '배 격차')}
           ${teamHBarClickChart(phChartData, perHeadAvg)}
         </div>
       </div>
       <div class="chart-card" style="display:flex;flex-direction:column;">
         <div class="chart-title" id="drill-title">← 팀을 선택하면 원인을 분석합니다</div>
         <div class="chart-subtitle">서비스별 구독비용 · 이번 달 · 전월 대비 MoM</div>
+        <div id="drill-insight" class="chart-insight">팀 막대를 클릭하면 주요 원인 서비스가 표시됩니다</div>
         <div style="flex:1;overflow-y:auto;max-height:320px;">
           <table class="data-table">
             <thead><tr>
@@ -1699,12 +1737,14 @@ function renderTeams() {
     <div class="chart-card" style="margin-bottom:20px;">
       <div class="chart-title">팀 규모 대비 비용 증가율이 정당한가?</div>
       <div class="chart-subtitle">팀별 월간 구독비용 추이 2024.01 — 2025.06</div>
+      ${ci('YoY 최고 증가: ' + teamYoYSort[0]?.label + ' +' + delta(teamYoYSort[0]?.v||0,teamYoYSort[0]?.yv||0).toFixed(1) + '% · 최저: ' + teamYoYSort[teamYoYSort.length-1]?.label + ' ' + delta(teamYoYSort[teamYoYSort.length-1]?.v||0,teamYoYSort[teamYoYSort.length-1]?.yv||0).toFixed(1) + '% — 증가율 적정성 리뷰 필요')}
       ${areaChart(teamHistData, 900, 180)}
       <div class="legend">${legendHtml}</div>
     </div>
     <div class="chart-card">
       <div class="chart-title">인당 비용이 전사 평균을 초과하는 팀은 어디이고, 그 차이는 정당한가?</div>
       <div class="chart-subtitle">빨강 = 전사 평균(${fmt(perHeadAvg)}/인) 초과</div>
+      ${ci(aboveAvgTeamsCnt + '개 팀이 전사 평균 초과 · 최고 ' + highestPH.label + ' ' + fmt(Math.round(highestPH.v/highestPH.headcount)) + '/인 vs 최저 ' + lowestPH.label + ' ' + fmt(Math.round(lowestPH.v/lowestPH.headcount)) + '/인 (' + perHeadGap + '배 격차)')}
       <table class="data-table">
         <thead><tr>
           <th>팀</th><th style="text-align:right">인원</th>
@@ -1768,6 +1808,11 @@ function renderCost() {
       <td style="color:${actionColor};font-size:11px;font-weight:${s.d>25?'700':'400'}">${s.action}</td>
     </tr>`;
   }).join('');
+  const costConsec = (() => { let c = 0; for (let i = trendData.length-1; i>0; i--) { if(trendData[i].v>trendData[i-1].v) c++; else break; } return c; })();
+  const aiCostPct = (aiCur / totalCur * 100).toFixed(0);
+  const cloudCostPct = (cloudCur / totalCur * 100).toFixed(0);
+  const urgentCnt = optItems.filter(s => s.d > 25).length;
+  const moderateCnt = optItems.filter(s => s.d > 15 && s.d <= 25).length;
   return `
   <div class="page-header">
     <div class="page-header-top">
@@ -1796,12 +1841,14 @@ function renderCost() {
     <div class="chart-card primary" style="margin-bottom:20px;">
       <div class="chart-title">비용이 계절적 패턴을 따르는가, 구조적으로 증가 중인가?</div>
       <div class="chart-subtitle">월간 총 구독비용 추이 2024.01 — 2025.06</div>
+      ${ci(costConsec >= 3 ? costConsec + '개월 연속 상승 확인 → 계절성 아닌 구조적 증가 패턴으로 판단됨' : momPct > 0 ? '이번 달 MoM +' + momPct.toFixed(1) + '% 상승이나 연속성 없어 일시적 변동 가능' : '이번 달 MoM ' + momPct.toFixed(1) + '% 하락, 상승 중단 여부 모니터링 필요')}
       ${areaChart([{ color: T.accent, data: trendData }], 900, 160)}
     </div>
     <div class="chart-grid col-2" style="margin-bottom:20px;">
       <div class="chart-card">
         <div class="chart-title">클라우드 vs AI 투자 비중이 전략 방향에 부합하는가?</div>
         <div class="chart-subtitle">카테고리별 이번 달 비용 구성</div>
+        ${ci('현재 AI ' + aiCostPct + '% · 클라우드 ' + cloudCostPct + '% · ' + (aiCur > cloudCur ? 'AI가 클라우드를 이미 초과 — AI 전환 기조 반영됨' : '클라우드가 여전히 우세 — AI 비중 확대 추세 모니터링 필요'))}
         ${hBarChart(CATEGORIES.map(cat=>({
           label:cat,
           v:sumBy(cur.filter(r=>SERVICES.find(s=>s.id===r.svc)?.cat===cat),'cost'),
@@ -1811,6 +1858,7 @@ function renderCost() {
       <div class="chart-card">
         <div class="chart-title">AI 도입 1.5년, 투자 대비 성과 측정 기준점에 도달했는가?</div>
         <div class="chart-subtitle">AI 도구 카테고리 월간 비용 2024.01 — 2025.06</div>
+        ${ci('18개월 AI 누적 성장 ' + (aiGrowth18m>=0?'+':'') + aiGrowth18m.toFixed(0) + '% · 현재 월 ' + fmt(aiCur) + ' → 투자 대비 성과 측정 기준점 수립 시점')}
         ${areaChart([{
           color: T.accent,
           data: MONTHS.map(m=>({label:m.ym, v:sumBy(base.filter(r=>r.ym===m.ym&&SERVICES.find(s=>s.id===r.svc)?.cat==='AI도구'),'cost')}))
@@ -1820,6 +1868,7 @@ function renderCost() {
     <div class="chart-card">
       <div class="chart-title">지금 당장 계약 재검토가 필요한 서비스는 무엇인가?</div>
       <div class="chart-subtitle">MoM 5%↑ 서비스 · 빨강=즉시 재협상(25%↑) · 노랑=팀 보고(15%↑) · 회색=다음 분기</div>
+      ${ci('즉시 재협상(25%↑) ' + urgentCnt + '개 · 팀 보고(15~25%↑) ' + moderateCnt + '개 포함 총 ' + optItems.length + '개 서비스 재검토 대상 — 이번 달 내 조치 권고')}
       <table class="data-table">
         <thead><tr>
           <th>서비스</th><th>카테고리</th>
