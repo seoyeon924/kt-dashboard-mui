@@ -119,7 +119,7 @@
 <div class="slide active" id="s1">
   <div class="body" style="position:relative; flex-direction:column; justify-content:space-between; padding:56px 72px; background:#050606; overflow:hidden;">
     <video autoplay loop muted playsinline style="position:absolute;right:0;top:0;width:55%;height:100%;object-fit:cover;opacity:0.85;z-index:0;">
-      <source src="../fastcampus-assets/videos/title-bg.mp4" type="video/mp4">
+      <source src="assets/title-bg.mp4" type="video/mp4">
     </video>
     <div style="position:absolute;inset:0;background:linear-gradient(to right, rgba(5,6,6,0.92) 40%, rgba(5,6,6,0.0) 100%);z-index:1;"></div>
     <div style="position:relative; z-index:2;">
@@ -330,7 +330,7 @@
       <div class="vid-num">1 / 3</div>
     </div>
     <div class="vid-right">
-      <video autoplay loop muted playsinline><source src="../fastcampus-assets/videos/12_3-3_2_.MP4" type="video/mp4"></video>
+      <video autoplay loop muted playsinline><source src="assets/12_3-3_2_.MP4" type="video/mp4"></video>
     </div>
   </div>
 </div>
@@ -355,7 +355,7 @@
       <div class="vid-num">2 / 3</div>
     </div>
     <div class="vid-right">
-      <video autoplay loop muted playsinline><source src="../fastcampus-assets/videos/avengers.mp4" type="video/mp4"></video>
+      <video autoplay loop muted playsinline><source src="assets/avengers.mp4" type="video/mp4"></video>
     </div>
   </div>
 </div>
@@ -379,7 +379,7 @@
       <div class="vid-num">3 / 3</div>
     </div>
     <div class="vid-right">
-      <video autoplay loop muted playsinline><source src="../fastcampus-assets/videos/solar-system.mp4" type="video/mp4"></video>
+      <video autoplay loop muted playsinline><source src="assets/solar-system.mp4" type="video/mp4"></video>
     </div>
   </div>
 </div>
@@ -407,7 +407,7 @@
       </div>
       <div class="dash-num">1 / 4</div>
     </div>
-    <div class="dash-right"><img src="../fastcampus-assets/images/0_1-1_.png" alt="Marketing Dashboard"></div>
+    <div class="dash-right"><img src="assets/0_1-1_.png" alt="Marketing Dashboard"></div>
   </div>
 </div>
 
@@ -425,7 +425,7 @@
       </div>
       <div class="dash-num">2 / 4</div>
     </div>
-    <div class="dash-right"><img src="../fastcampus-assets/images/2_1-3_PM_Dashboard.png" alt="PM Dashboard"></div>
+    <div class="dash-right"><img src="assets/2_1-3_PM_Dashboard.png" alt="PM Dashboard"></div>
   </div>
 </div>
 
@@ -443,7 +443,7 @@
       </div>
       <div class="dash-num">3 / 4</div>
     </div>
-    <div class="dash-right"><img src="../fastcampus-assets/images/3_1-4_HR_.png" alt="HR Dashboard"></div>
+    <div class="dash-right"><img src="assets/3_1-4_HR_.png" alt="HR Dashboard"></div>
   </div>
 </div>
 
@@ -461,7 +461,7 @@
       </div>
       <div class="dash-num">4 / 4</div>
     </div>
-    <div class="dash-right"><img src="../fastcampus-assets/images/4_1-5_.png" alt="Sales Retention"></div>
+    <div class="dash-right"><img src="assets/4_1-5_.png" alt="Sales Retention"></div>
   </div>
 </div>
 
@@ -1105,6 +1105,348 @@
         <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;"><span style="font-size:10px; font-weight:700; color:#ef7d86; letter-spacing:0.12em; flex-shrink:0;">FAIL 03</span><span style="font-size:13.5px; font-weight:700; color:#ffffff; line-height:1.4;">재현성 문제 — 같은 데이터, 다른 결과</span></div>
         <div style="font-size:11.5px; color:rgba(255,255,255,0.45); margin-bottom:10px; padding-left:28px;">같은 CSV를 넣어도 실행할 때마다 결과가 달라지고, 중간에 실패하면 어디서부터 재실행해야 할지 불명확</div>
         <div style="display:flex; gap:8px; padding-left:28px; align-items:flex-start;"><span style="font-size:10px; color:#35c995; font-weight:700; flex-shrink:0; padding-top:2px;">→ 해결</span><span style="font-size:11.5px; color:rgba(255,255,255,0.65); line-height:1.65;">.run_id 체크포인트 — 완료된 단계는 자동으로 건너뜀, 실패한 단계부터 재시작</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token Section Cover ════ -->
+<div class="slide" id="s-dt-cover">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#080808;">
+    <div class="sec-label">Part 2 · 2-4 — Design System</div>
+    <div class="sec-title" style="font-size:clamp(28px,4.2vw,56px); font-weight:300; letter-spacing:-0.02em;">Design Token</div>
+    <div class="sec-sub">색상·폰트·간격을 이름 붙인 변수<br>— 하나 바꾸면 전체가 바뀌는 구조</div>
+    <div style="margin-top:44px; display:flex; gap:20px;">
+      <div style="border:1px solid #282828; padding:20px 24px; text-align:left; min-width:220px;">
+        <div style="font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.2); margin-bottom:10px;">이 섹션에서 다루는 것</div>
+        <div style="font-size:14px; color:rgba(255,255,255,0.55); line-height:2;">토큰 방식의 장단점<br>일반인을 위한 설계 방법<br>참고 사이트 5개</div>
+      </div>
+      <div style="border:1px solid #282828; padding:20px 24px; text-align:left; min-width:220px;">
+        <div style="font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.2); margin-bottom:10px;">실무 사례</div>
+        <div style="font-size:14px; color:rgba(255,255,255,0.55); line-height:2;">Anthropic 내부 AI 분석 시스템<br>정확도 21% → 95% 달성 방법<br>팀에서 바로 쓸 수 있는 팁 3가지</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 장단점 ════ -->
+<div class="slide" id="s-dt1">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 장단점</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div style="flex:1; border-right:1px solid var(--border); padding:48px 44px; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#35c995; margin-bottom:6px;">장점 · Pros</div>
+      <div style="font-size:20px; font-weight:300; color:#fff; margin-bottom:12px; letter-spacing:-0.01em;">바꾸기 쉬워지는 이유</div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:5px;">일관성</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">한 곳만 바꾸면 전체 적용</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">Primary 색상 하나가 버튼·헤더·뱃지 모두에 연결. 브랜드 색상 변경 시 한 줄로 끝.</div>
+      </div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:5px;">테마 전환</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">다크모드·브랜드 교체 즉시 반영</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">MUI <code style="font-family:monospace; font-size:11px; background:#1a1a1a; padding:1px 5px; border-radius:3px;">createTheme()</code>으로 테마만 교체하면 전체 UI가 한 번에 바뀜.</div>
+      </div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:5px;">협업</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">디자이너 · 개발자 공통 언어</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">"Primary Blue"라는 이름을 공유. 디자인 파일과 코드가 같은 이름으로 동기화.</div>
+      </div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:5px;">유지보수</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">하드코딩 찾아다닐 필요 없음</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">코드 전체를 검색하지 않아도 됨. 값이 어디에 쓰이는지 즉시 파악 가능.</div>
+      </div>
+    </div>
+    <div style="flex:1; padding:48px 44px; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#E8603C; margin-bottom:6px;">단점 · Cons</div>
+      <div style="font-size:20px; font-weight:300; color:#fff; margin-bottom:12px; letter-spacing:-0.01em;">감수해야 하는 비용</div>
+      <div style="border:1px solid rgba(232,96,60,0.25); background:rgba(232,96,60,0.03); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(232,96,60,0.7); font-family:monospace; margin-bottom:5px;">설계 비용</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">처음에 체계 잡는 시간 필요</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">어떤 단위까지 토큰화할지 결정해야 함. 너무 세밀하면 오히려 관리 부담 증가.</div>
+      </div>
+      <div style="border:1px solid rgba(232,96,60,0.25); background:rgba(232,96,60,0.03); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(232,96,60,0.7); font-family:monospace; margin-bottom:5px;">학습 곡선</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">팀 전체가 체계를 이해해야 함</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">토큰 이름만 보고 어떤 색인지 바로 알아야 함. 팀 온보딩 문서 필요.</div>
+      </div>
+      <div style="border:1px solid rgba(232,96,60,0.25); background:rgba(232,96,60,0.03); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(232,96,60,0.7); font-family:monospace; margin-bottom:5px;">추상화 위험</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:4px;">잘못 설계하면 오히려 복잡</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">토큰이 너무 많거나 계층이 깊어지면 어떤 값이 어디서 오는지 추적 어려움.</div>
+      </div>
+      <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:auto;">
+        <div style="font-size:12px; color:rgba(255,255,255,0.35); line-height:1.8;">결론 — 3개 이상 페이지를 만드는 서비스라면<br>설계 비용을 감수할 가치가 있음</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 코드 비교 ════ -->
+<div class="slide" id="s-dt2">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 코드 비교</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:32px 52px 36px; flex-direction:column; gap:18px;">
+    <div>
+      <div class="eyebrow">Before / After</div>
+      <div class="big-title" style="font-size:36px; margin-bottom:0;">하드코딩 vs 토큰</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex:1;">
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#ef7d86; font-family:monospace;">❌ 하드코딩 — 수정 시 4곳 모두 변경</div>
+        <div class="code-wrap" style="flex:1; border-radius:10px; font-size:12.5px; line-height:1.75;"><span style="color:rgba(255,255,255,0.28);">/* 브랜드 색상을 #0057B7로 바꾸려면? */</span>
+
+<span style="color:rgba(255,255,255,0.28);">/* 버튼 */</span>
+.button {
+  background: <span style="color:#ef7d86;">#C8001A</span>;
+}
+<span style="color:rgba(255,255,255,0.28);">/* 헤더 */</span>
+.header {
+  border-bottom: 3px solid <span style="color:#ef7d86;">#C8001A</span>;
+}
+<span style="color:rgba(255,255,255,0.28);">/* 뱃지 */</span>
+.badge {
+  color: <span style="color:#ef7d86;">#C8001A</span>;
+  border: 1px solid <span style="color:#ef7d86;">#C8001A</span>;
+}
+
+<span style="color:rgba(255,255,255,0.28);">/* → 4곳을 일일이 찾아서 바꿔야 함
+   파일 많을수록 누락 위험 ↑  */</span></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#35c995; font-family:monospace;">✅ Design Token — 한 곳만 바꾸면 끝</div>
+        <div class="code-wrap" style="flex:1; border-radius:10px; font-size:12.5px; line-height:1.75;"><span style="color:rgba(255,255,255,0.28);">/* 토큰 정의 — 딱 한 곳에서만 */</span>
+const theme = createTheme({
+  palette: {
+    primary: { main: <span style="color:#35c995;">'#C8001A'</span> }
+    <span style="color:rgba(255,255,255,0.28);">↑ 여기 하나만 바꾸면</span>
+  }
+})
+
+<span style="color:rgba(255,255,255,0.28);">/* 버튼 · 헤더 · 뱃지 모두
+   theme.palette.primary.main 참조 */</span>
+
+&lt;Button color=<span style="color:#35c995;">"primary"</span>&gt;...&lt;/Button&gt;
+
+sx={{ borderColor: <span style="color:#35c995;">'primary.main'</span> }}
+sx={{ color: <span style="color:#35c995;">'primary.main'</span> }}
+
+<span style="color:rgba(255,255,255,0.28);">/* → 전체 자동 업데이트
+   누락 없음, 실수 없음 */</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 설계 방법 ════ -->
+<div class="slide" id="s-dt3">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 설계 방법</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:36px 52px 36px; flex-direction:column; gap:18px;">
+    <div>
+      <div class="eyebrow">처음 설계하는 사람을 위한 3단계</div>
+      <div class="big-title" style="font-size:34px; margin-bottom:0;">색상만 먼저, 나머지는 나중에</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; flex:1; align-content:start;">
+      <div style="border:1px solid var(--border); border-radius:10px; padding:24px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:40px; font-weight:800; color:rgba(255,255,255,0.08); letter-spacing:-0.04em; line-height:1;">01</div>
+        <div style="font-size:17px; font-weight:600; color:#fff;">색상 4가지만 정의</div>
+        <div style="font-size:13px; color:rgba(255,255,255,0.4); line-height:1.75;">Primary · Background · Text · Error<br>이 4가지로 대부분의 UI 커버 가능</div>
+        <div class="code-wrap" style="font-size:12px; padding:12px 14px; border-radius:8px; margin-top:auto; line-height:1.7;">primary:    <span style="color:#E8603C;">'#C8001A'</span>
+background: <span style="color:#E8603C;">'#FFFFFF'</span>
+text:       <span style="color:#E8603C;">'#1C1A18'</span>
+error:      <span style="color:#E8603C;">'#A1524A'</span></div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:24px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:40px; font-weight:800; color:rgba(255,255,255,0.08); letter-spacing:-0.04em; line-height:1;">02</div>
+        <div style="font-size:17px; font-weight:600; color:#fff;">폰트 하나만 고르기</div>
+        <div style="font-size:13px; color:rgba(255,255,255,0.4); line-height:1.75;">한국어: Pretendard 또는 Noto Sans KR<br>영어: Inter 또는 Geist<br>숫자·코드: JetBrains Mono</div>
+        <div class="code-wrap" style="font-size:12px; padding:12px 14px; border-radius:8px; margin-top:auto; line-height:1.7;">typography: {
+  fontFamily:
+    "'Pretendard', sans-serif"
+}</div>
+      </div>
+      <div style="border:1px solid rgba(232,96,60,0.3); background:rgba(232,96,60,0.04); border-radius:10px; padding:24px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:40px; font-weight:800; color:rgba(232,96,60,0.18); letter-spacing:-0.04em; line-height:1;">03</div>
+        <div style="font-size:17px; font-weight:600; color:#fff;">라이브러리 그냥 쓰기</div>
+        <div style="font-size:13px; color:rgba(255,255,255,0.4); line-height:1.75;">MUI · shadcn/ui 같은 라이브러리는<br>토큰 체계가 이미 설계되어 있음<br>직접 처음부터 만들 필요 없음</div>
+        <div style="margin-top:auto; font-size:12px; color:#E8603C; font-weight:600; font-family:monospace;">→ 오늘 데모에서 쓴 방법</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:13px; display:flex; gap:28px;">
+      <div style="font-size:12px; color:rgba(255,255,255,0.3); line-height:1.7;"><span style="font-weight:600; color:rgba(255,255,255,0.55);">주의</span> — 완벽한 체계보다 일단 시작이 중요. 색상 4개로 시작해서 필요할 때 확장.</div>
+      <div style="font-size:12px; color:rgba(255,255,255,0.3); line-height:1.7; flex:1;"><span style="font-weight:600; color:rgba(255,255,255,0.55);">다음 단계</span> — 간격(spacing) · 테두리 반경(borderRadius) · 그림자(shadow) 순서로 추가.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Design Token 레퍼런스 ════ -->
+<div class="slide" id="s-dt4">
+  <div class="tb"><span class="tb-cap">Part 2 · Design Token — 레퍼런스</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:32px 52px 36px; flex-direction:column; gap:16px;">
+    <div>
+      <div class="eyebrow">참고 사이트 5개</div>
+      <div class="big-title" style="font-size:34px; margin-bottom:0;">처음엔 보고 따라 하기</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; flex:1; align-content:start;">
+      <div style="border:1px solid rgba(232,96,60,0.35); background:rgba(232,96,60,0.04); border-radius:10px; padding:18px 14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#E8603C; font-family:monospace;">오늘 데모에서 사용</div>
+        <div style="font-size:15px; font-weight:600; color:#fff;">MUI</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.25); font-family:monospace;">mui.com</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">React용 가장 완성된 컴포넌트 라이브러리. <code style="font-family:monospace; font-size:10px;">createTheme()</code>으로 토큰 정의.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); font-family:monospace;">2025년 트렌드 1위</div>
+        <div style="font-size:15px; font-weight:600; color:#fff;">shadcn/ui</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.25); font-family:monospace;">ui.shadcn.com</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">CSS 변수 기반 토큰. 복사-붙여넣기 방식으로 컴포넌트를 직접 코드에 소유. Tailwind 기반.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); font-family:monospace;">디자이너 도구</div>
+        <div style="font-size:15px; font-weight:600; color:#fff;">Figma Variables</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.25); font-family:monospace;">figma.com</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">Figma 내장 변수 기능이 Design Token과 동일. 디자인 파일에서 토큰을 정의하고 공유 가능.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); font-family:monospace;">다플랫폼 변환</div>
+        <div style="font-size:15px; font-weight:600; color:#fff;">Style Dictionary</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.25); font-family:monospace;">styledictionary.com</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">Amazon 오픈소스. 토큰을 JSON으로 정의하면 CSS·iOS·Android 코드로 자동 변환.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 14px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); font-family:monospace;">Figma 플러그인</div>
+        <div style="font-size:15px; font-weight:600; color:#fff;">Tokens Studio</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.25); font-family:monospace;">tokens.studio</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.45); line-height:1.65;">Figma에서 JSON 토큰 파일을 직접 관리. GitHub와 동기화해서 디자인-개발 워크플로우 자동화.</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="font-size:12px; color:rgba(255,255,255,0.3);">비코더 시작점 → Figma Variables로 개념 파악 → MUI로 직접 구현</div>
+      <div style="font-size:12px; color:rgba(255,255,255,0.3);">코드 작성 없이 → Tokens Studio + Figma</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 섹션 브레이크 ════ -->
+<div class="slide" id="s-dt-anthropic">
+  <div class="body" style="flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#080808;">
+    <div class="sec-label">Anthropic 실무 사례</div>
+    <div class="sec-title" style="font-size:clamp(22px,3.2vw,42px);">AI 분석 시스템을<br>직접 만들어 쓴 방법</div>
+    <div class="sec-sub">내부 쿼리 95% 자동화 · 정확도 95%<br>데이터 분석팀 없이, 비개발자도 직접 분석</div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 21% → 95% ════ -->
+<div class="slide" id="s-dt5">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 01 — 정확도 차이</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:36px 52px 36px; flex-direction:column; gap:18px;">
+    <div>
+      <div class="eyebrow">정확도 차이를 만든 것</div>
+      <div class="big-title" style="font-size:36px; margin-bottom:0;">SQL이 아니라 절차를 알려줬을 때</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center;">
+      <div style="border:1px solid rgba(232,96,60,0.3); background:rgba(232,96,60,0.04); border-radius:10px; padding:20px 18px;">
+        <div style="font-size:52px; font-weight:800; color:#E8603C; letter-spacing:-0.04em; line-height:1;">21%</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:6px;">스킬 없이 — 데이터만 제공했을 때</div>
+      </div>
+      <div style="font-size:28px; color:rgba(255,255,255,0.2);">→</div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:20px 18px;">
+        <div style="font-size:52px; font-weight:800; color:#35c995; letter-spacing:-0.04em; line-height:1;">95%</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:6px;">스킬 추가 후 — 분석 절차를 문서화했을 때</div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; align-content:start;">
+      <div style="border:1px solid var(--border); border-radius:10px; padding:16px 18px; background:rgba(255,255,255,0.03);">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.28); font-family:monospace; margin-bottom:6px;">스킬이란?</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:5px;">시니어 분석가의 사고방식을 글로 적은 것</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">SQL 원문이 아니라 "어떤 순서로 생각하는가"를 Markdown으로 문서화. 수천 개 쿼리 히스토리보다 구조화된 절차 1개가 더 효과적.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:16px 18px; background:rgba(255,255,255,0.03);">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.28); font-family:monospace; margin-bottom:6px;">실무 교훈</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:5px;">데이터 양이 아니라 구조와 맥락이 AI 성능 결정</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">과거 SQL 수천 개 → 정확도 1% 미만 향상<br>절차 문서 1개 추가 → 정확도 74%p 향상<br><br>양이 아니라, <span style="color:#fff; font-weight:600;">맥락</span>이 결정한다.</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:11px;">
+      <div style="font-size:12px; color:rgba(255,255,255,0.3); line-height:1.8;">적용 방법 → 팀의 분석 워크플로우를 CLAUDE.md 또는 Markdown 파일로 작성. AI에게 "어떻게 생각해야 하는지"를 먼저 알려주기.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic 정의가 먼저 ════ -->
+<div class="slide" id="s-dt6">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 02 — 개념 정의</span><span class="tb-num">— — —</span></div>
+  <div class="body">
+    <div class="l-panel" style="justify-content:flex-start; gap:18px;">
+      <div class="eyebrow">데이터 품질의 출발점</div>
+      <div class="big-title" style="font-size:clamp(20px,2.6vw,32px); line-height:1.3; margin-bottom:12px;">개념 정의가<br>AI 분석 품질을<br>결정한다</div>
+      <div class="body-text" style="font-size:13px;">
+        AI가 틀리는 이유 대부분은<br>
+        AI 실력이 아니라<br>
+        <span style="color:#E8603C; font-weight:600;">용어 정의의 모호함</span>에서 비롯됨
+      </div>
+      <svg width="200" height="80" viewBox="0 0 220 90" style="margin:12px 0; display:block;">
+        <rect x="0" y="32" width="80" height="26" rx="3" stroke="#444" stroke-width="1.2" fill="none"/>
+        <text x="40" y="49" text-anchor="middle" font-size="11" fill="#666" font-family="monospace">"액티브 유저"</text>
+        <line x1="82" y1="45" x2="108" y2="45" stroke="#444" stroke-width="1.2"/>
+        <polygon points="112,45 107,41 107,49" fill="#444"/>
+        <rect x="112" y="32" width="44" height="26" rx="3" stroke="#35c995" stroke-width="1.2" fill="none"/>
+        <text x="134" y="49" text-anchor="middle" font-size="11" fill="#35c995" font-family="monospace">AI</text>
+        <line x1="158" y1="45" x2="178" y2="45" stroke="#444" stroke-width="1.2"/>
+        <polygon points="182,45 177,41 177,49" fill="#444"/>
+        <rect x="182" y="32" width="36" height="26" rx="3" stroke="#ef7d86" stroke-width="1.2" fill="none"/>
+        <text x="200" y="49" text-anchor="middle" font-size="11" fill="#ef7d86" font-family="monospace">?</text>
+        <text x="40" y="74" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">정의 없음</text>
+        <text x="200" y="74" text-anchor="middle" font-size="9" fill="#ef7d86" font-family="monospace">오답</text>
+      </svg>
+    </div>
+    <div style="flex:1; padding:40px 44px; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+      <div style="border:1px solid rgba(232,96,60,0.25); background:rgba(232,96,60,0.03); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(232,96,60,0.7); font-family:monospace; margin-bottom:5px;">실제 예시</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:5px;">영업팀 vs 마케팅팀의 "액티브 유저"</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">영업팀: 최근 30일 내 로그인한 유저<br>마케팅팀: 최근 7일 내 구매한 유저<br>→ 같은 질문, 다른 답 — AI는 어떤 정의를 써야 할지 모름</div>
+      </div>
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:5px;">해결 방법</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:6px;">KPI 정의서 한 페이지로 시작</div>
+        <div class="code-wrap" style="font-size:11.5px; padding:10px 14px; border-radius:6px; line-height:1.75;">액티브 유저 = 최근 30일 내 1회 이상 로그인한 유저<br>제외: 테스트 계정, 내부 직원</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:16px 18px; background:rgba(255,255,255,0.03);">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.28); font-family:monospace; margin-bottom:5px;">워크숍 활동 제안</div>
+        <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:5px;">팀 KPI 중 정의가 다른 것 3개 찾기</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">영업 · 마케팅 · 개발팀이 각자 쓰는 "고객 수" 계산법을 비교. 다르면 AI 분석 전에 먼저 통일.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Anthropic AI 초안 + 사람 검증 ════ -->
+<div class="slide" id="s-dt7">
+  <div class="tb"><span class="tb-cap">Anthropic 실무 사례 03 — 운영 원칙</span><span class="tb-num">— — —</span></div>
+  <div class="body" style="padding:36px 52px 36px; flex-direction:column; gap:18px;">
+    <div>
+      <div class="eyebrow">Anthropic 내부 운영 원칙</div>
+      <div class="big-title" style="font-size:36px; margin-bottom:0;">AI는 초안 머신, 정의는 사람이</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; flex:1; align-content:start;">
+      <div style="border:1px solid rgba(53,201,149,0.3); background:rgba(53,201,149,0.04); border-radius:10px; padding:18px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(53,201,149,0.7); font-family:monospace; margin-bottom:6px;">AI가 잘하는 것</div>
+        <div style="font-size:14px; font-weight:600; color:#fff; margin-bottom:5px;">문서 초안 작성</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">지표 정의 초안, KPI 제안, 컬럼 설명 자동 생성. 사람보다 빠르고 누락 없음.</div>
+      </div>
+      <div style="border:1px solid rgba(232,96,60,0.25); background:rgba(232,96,60,0.03); border-radius:10px; padding:18px 18px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(232,96,60,0.7); font-family:monospace; margin-bottom:6px;">사람이 해야 하는 것</div>
+        <div style="font-size:14px; font-weight:600; color:#fff; margin-bottom:5px;">정의의 최종 책임</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">AI 초안이 맞는지 검토하고 서명. "이 정의는 우리 비즈니스에 맞는가"는 사람만 판단 가능.</div>
+      </div>
+      <div style="border:1px solid var(--border); border-radius:10px; padding:18px 18px; background:rgba(255,255,255,0.03);">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.28); font-family:monospace; margin-bottom:6px;">운영 주의사항</div>
+        <div style="font-size:14px; font-weight:600; color:#fff; margin-bottom:5px;">1개월 방치 시 95% → 65%</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.7;">데이터 모델이 바뀌면 AI 분석 정확도가 자동으로 떨어짐. 정기 업데이트 필수.</div>
+      </div>
+    </div>
+    <div style="border:1.5px solid rgba(232,96,60,0.3); border-radius:8px; padding:18px 22px; background:rgba(232,96,60,0.04); display:flex; align-items:center; gap:24px;">
+      <div>
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#E8603C; font-family:monospace; margin-bottom:5px;">이 섹션 전체의 결론</div>
+        <div style="font-size:15px; font-weight:600; color:#fff; line-height:1.55;">Design Token이든 AI 분석이든 — 처음부터 완벽할 필요 없음<br>색상 4개, KPI 정의 3개, 작은 시작이 맞는 방향</div>
       </div>
     </div>
   </div>
